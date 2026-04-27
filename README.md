@@ -40,9 +40,13 @@ uv run pyright src tests
   - `-1 = null / out-of-bounds`
   - `0 = open`
   - `1 = solid`
+- Each traced PNG under `static/floor-plan/traced` must have a sibling JSON file with `grid_cell_size_m`.
 - Traced PNG assets under `static/floor-plan/traced` are interpreted as:
   - transparent = null
   - black = solid
   - white = open
-- Common floor-plan code lives under `src/common`.
-- The notebook entrypoint for interactive loader checks is `src/planner/main.ipynb`.
+- Common floor-plan code and the loader check notebook live under `src/common`.
+- The optimization package, phase notebooks, and presentation notebook live under `src/planner`.
+- The loader check notebook is `src/common/check.ipynb`.
+- The planner presentation notebook is `src/planner/main.ipynb`.
+- Deterministic reusable planner artifacts should be written under `artifacts/planner`.

@@ -6,16 +6,13 @@ import numpy as np
 
 from ..floorplan import FloorPlanInput, NULL_CELL, OPEN_CELL, PathLikeStr, SOLID_CELL
 from .decoder import decode_traced_rgba, read_rgba_image
+from .metadata import load_traced_floorplan_metadata
 from .validator import validate_traced_palette
 
 
-def load_traced_floorplan(
-    path: PathLikeStr,
-    *,
-    meters_per_pixel: float | None = None,
-    grid_cell_size_m: float | None = None,
-) -> FloorPlanInput:
+def load_traced_floorplan(path: PathLikeStr) -> FloorPlanInput:
     source_path = Path(path).expanduser().resolve()
+    metadata = load_traced_floorplan_metadata(source_path)
     rgba_image = read_rgba_image(source_path)
     validate_traced_palette(rgba_image, source_path=source_path)
     grid = decode_traced_rgba(rgba_image)
@@ -34,17 +31,11 @@ def load_traced_floorplan(
         null_cell_count=null_cell_count,
         open_cell_count=open_cell_count,
         solid_cell_count=solid_cell_count,
-        meters_per_pixel=meters_per_pixel,
-        grid_cell_size_m=grid_cell_size_m,
+        grid_cell_size_m=metadata.grid_cell_size_m,
     )
 
 
-def load_traced_floorplans(
-    directory: PathLikeStr,
-    *,
-    meters_per_pixel: float | None = None,
-    grid_cell_size_m: float | None = None,
-) -> dict[str, FloorPlanInput]:
+def load_traced_floorplans(directory: PathLikeStr) -> dict[str, FloorPlanInput]:
     directory_path = Path(directory).expanduser().resolve()
     if not directory_path.exists():
         raise FileNotFoundError(
@@ -57,11 +48,7 @@ def load_traced_floorplans(
 
     floorplans: dict[str, FloorPlanInput] = {}
     for image_path in sorted(directory_path.glob("*.png")):
-        floorplan = load_traced_floorplan(
-            image_path,
-            meters_per_pixel=meters_per_pixel,
-            grid_cell_size_m=grid_cell_size_m,
-        )
+        floorplan = load_traced_floorplan(image_path)
         floorplans[floorplan.name] = floorplan
 
     return floorplans

@@ -32,7 +32,6 @@ class FloorPlanInput:
     null_cell_count: int
     open_cell_count: int
     solid_cell_count: int
-    meters_per_pixel: float | None = None
     grid_cell_size_m: float | None = None
 
     def __post_init__(self) -> None:
@@ -48,6 +47,8 @@ class FloorPlanInput:
         total_cells = self.height * self.width
         if self.null_cell_count + self.open_cell_count + self.solid_cell_count != total_cells:
             raise ValueError("FloorPlanInput cell counts must sum to the grid size.")
+        if self.grid_cell_size_m is not None and self.grid_cell_size_m <= 0:
+            raise ValueError("FloorPlanInput.grid_cell_size_m must be positive when set.")
 
     @property
     def shape(self) -> tuple[int, int]:

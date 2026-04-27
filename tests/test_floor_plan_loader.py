@@ -5,6 +5,7 @@ import struct
 import unittest
 import zlib
 from contextlib import contextmanager
+import json
 from pathlib import Path
 from typing import Iterator
 from uuid import uuid4
@@ -58,6 +59,14 @@ def _write_rgba_png(path: Path, rgba: np.ndarray) -> None:
     path.write_bytes(png_bytes)
 
 
+def _write_floorplan_metadata(path: Path, *, grid_cell_size_m: float | None) -> None:
+    metadata_path = path.with_suffix(".json")
+    metadata_path.write_text(
+        json.dumps({"grid_cell_size_m": grid_cell_size_m}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+
 @contextmanager
 def _workspace_temp_dir() -> Iterator[Path]:
     _TEST_TEMP_ROOT.mkdir(exist_ok=True)
@@ -81,12 +90,8 @@ class FloorPlanLoaderTests(unittest.TestCase):
                 dtype=np.uint8,
             )
             _write_rgba_png(image_path, rgba)
-
-            floorplan = load_traced_floorplan(
-                image_path,
-                meters_per_pixel=0.2,
-                grid_cell_size_m=0.5,
-            )
+            _write_floorplan_metadata(image_path, grid_cell_size_m=0.5)
+            floorplan = load_traced_floorplan(image_path)
 
         expected_grid = np.array(
             [
@@ -100,7 +105,6 @@ class FloorPlanLoaderTests(unittest.TestCase):
         self.assertEqual(floorplan.null_cell_count, 1)
         self.assertEqual(floorplan.open_cell_count, 2)
         self.assertEqual(floorplan.solid_cell_count, 1)
-        self.assertEqual(floorplan.meters_per_pixel, 0.2)
         self.assertEqual(floorplan.grid_cell_size_m, 0.5)
         np.testing.assert_array_equal(
             floorplan.open_mask,
@@ -116,10 +120,12 @@ class FloorPlanLoaderTests(unittest.TestCase):
                 traced_dir / "b-room.png",
                 np.array([[transparent]], dtype=np.uint8),
             )
+            _write_floorplan_metadata(traced_dir / "b-room.png", grid_cell_size_m=1.0)
             _write_rgba_png(
                 traced_dir / "a-room.png",
                 np.array([[white]], dtype=np.uint8),
             )
+            _write_floorplan_metadata(traced_dir / "a-room.png", grid_cell_size_m=0.5)
 
             floorplans = load_traced_floorplans(traced_dir)
 
@@ -132,6 +138,7 @@ class FloorPlanLoaderTests(unittest.TestCase):
             image_path = temp_dir / "invalid-color.png"
             rgba = np.array([[[255, 0, 0, 255]]], dtype=np.uint8)
             _write_rgba_png(image_path, rgba)
+            _write_floorplan_metadata(image_path, grid_cell_size_m=0.5)
 
             with self.assertRaisesRegex(
                 TracedFloorPlanValidationError,
@@ -144,6 +151,7 @@ class FloorPlanLoaderTests(unittest.TestCase):
             image_path = temp_dir / "partial-alpha.png"
             rgba = np.array([[[255, 255, 255, 128]]], dtype=np.uint8)
             _write_rgba_png(image_path, rgba)
+            _write_floorplan_metadata(image_path, grid_cell_size_m=0.5)
 
             with self.assertRaisesRegex(
                 TracedFloorPlanValidationError,
@@ -173,6 +181,35 @@ class FloorPlanLoaderTests(unittest.TestCase):
             + floorplan.solid_cell_count,
             floorplan.height * floorplan.width,
         )
+        self.assertIsNone(floorplan.grid_cell_size_m)
+
+    def test_load_traced_floorplan_requires_sibling_metadata_json(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "missing-metadata.png"
+            rgba = np.array([[[255, 255, 255, 255]]], dtype=np.uint8)
+            _write_rgba_png(image_path, rgba)
+
+            with self.assertRaisesRegex(
+                FileNotFoundError,
+                r"Expected traced floor-plan metadata JSON next to the PNG",
+            ):
+                load_traced_floorplan(image_path)
+
+    def test_load_traced_floorplan_rejects_invalid_grid_cell_size_metadata(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "invalid-metadata.png"
+            rgba = np.array([[[255, 255, 255, 255]]], dtype=np.uint8)
+            _write_rgba_png(image_path, rgba)
+            image_path.with_suffix(".json").write_text(
+                json.dumps({"grid_cell_size_m": "large"}) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ValueError,
+                r"grid_cell_size_m' must be a positive number or null",
+            ):
+                load_traced_floorplan(image_path)
 
     def test_floorplan_plot_displays_loaded_grid(self) -> None:
         floorplan = FloorPlanInput(
