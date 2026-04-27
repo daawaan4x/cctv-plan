@@ -1,0 +1,1096 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>210×90 Grid Image Underlay Editor</title>
+  <style>
+    :root {
+      --bg: #111318;
+      --panel: #1a1d25;
+      --panel-2: #232733;
+      --text: #f2f4f8;
+      --muted: #a7afbf;
+      --border: #343a49;
+      --accent: #74a7ff;
+      --danger: #ff7777;
+      --radius: 12px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #202431 0, var(--bg) 52%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 20px 10px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17, 19, 24, 0.84);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    .control {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    label,
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    input[type="file"],
+    input[type="number"],
+    select,
+    button {
+      min-height: 36px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 7px 10px;
+      font: inherit;
+      width: 100%;
+    }
+
+    input[type="range"] { width: 100%; }
+
+    input[type="checkbox"] {
+      width: auto;
+      min-height: auto;
+      accent-color: var(--accent);
+    }
+
+    .checkline {
+      min-height: 36px;
+      border-radius: 9px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 7px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled { cursor: not-allowed; opacity: 0.42; }
+
+    button.danger { color: #ffdada; border-color: rgba(255, 119, 119, 0.55); }
+    button.primary { background: #2b5fb7; border-color: #3f7ce5; }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .row > * { flex: 1; }
+
+    .segmented,
+    .swatches {
+      display: grid;
+      gap: 6px;
+    }
+
+    .segmented { grid-template-columns: repeat(3, 1fr); }
+    .swatches { grid-template-columns: repeat(4, 1fr); }
+
+    .segment,
+    .swatch {
+      height: 36px;
+      border-radius: 9px;
+      border: 2px solid var(--border);
+      background: var(--panel-2);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 0 8px;
+    }
+
+    .segment.active,
+    .swatch.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(116, 167, 255, 0.25);
+    }
+
+    .swatch[data-mode="transparent"] {
+      background:
+        linear-gradient(45deg, #777 25%, transparent 25%),
+        linear-gradient(-45deg, #777 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #777 75%),
+        linear-gradient(-45deg, transparent 75%, #777 75%);
+      background-size: 12px 12px;
+      background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+      background-color: #333;
+    }
+
+    .swatch[data-mode="white"] { background: white; }
+    .swatch[data-mode="black"] { background: black; }
+    .swatch[data-mode="cycle"]::after {
+      content: "Cycle";
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, transparent 0 33%, white 33% 66%, black 66%);
+      text-shadow: 0 1px 2px black;
+    }
+
+    main {
+      flex: 1;
+      padding: 18px 20px 24px;
+      min-height: 0;
+    }
+
+    .stage-wrap {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.32);
+    }
+
+    .stage-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .canvas-shell {
+      width: 100%;
+      aspect-ratio: 7 / 3;
+      max-height: calc(100vh - 285px);
+      min-height: 260px;
+      border-radius: 10px;
+      overflow: hidden;
+      background:
+        linear-gradient(45deg, #3a3f4d 25%, transparent 25%),
+        linear-gradient(-45deg, #3a3f4d 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #3a3f4d 75%),
+        linear-gradient(-45deg, transparent 75%, #3a3f4d 75%);
+      background-size: 22px 22px;
+      background-position: 0 0, 0 11px, 11px -11px, -11px 0;
+      background-color: #242832;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    kbd {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 5px;
+      padding: 1px 5px;
+      color: var(--text);
+      font-size: 11px;
+    }
+
+    @media (max-width: 760px) {
+      header { position: static; }
+      main { padding: 12px; }
+      .canvas-shell { min-height: 220px; max-height: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>210×90 Grid Image Underlay Editor</h1>
+    <section class="toolbar" aria-label="Editor controls">
+      <div class="control">
+        <label for="imageInput">Underlay image</label>
+        <input id="imageInput" type="file" accept="image/*" />
+      </div>
+
+      <div class="control">
+        <span class="label">Underlay</span>
+        <button id="removeUnderlayBtn" type="button">Remove image</button>
+      </div>
+
+      <div class="control">
+        <label for="underlayOpacity">Underlay opacity: <span id="opacityValue">75%</span></label>
+        <input id="underlayOpacity" type="range" min="0" max="100" value="75" />
+      </div>
+
+      <div class="control">
+        <span class="label">Tool</span>
+        <div class="segmented" role="group" aria-label="Tool">
+          <button class="segment active" type="button" data-tool="brush">Brush</button>
+          <button class="segment" type="button" data-tool="fill">Bucket fill</button>
+          <button class="segment" type="button" data-tool="line">Line</button>
+        </div>
+      </div>
+      <div class="control">
+        <span class="label">Line snapping</span>
+        <label class="checkline" for="lineSnapToggle">
+          <input id="lineSnapToggle" type="checkbox" checked />
+          Snap to painted cells
+        </label>
+        <label for="lineSnapRadius">Snap radius: <span id="lineSnapRadiusValue">3</span> cells</label>
+        <input id="lineSnapRadius" type="range" min="0" max="12" value="3" />
+      </div>
+
+      <div class="control">
+        <span class="label">Paint mode</span>
+        <div class="swatches" role="group" aria-label="Paint mode">
+          <button class="swatch active" type="button" data-mode="cycle" title="Cycle transparent → white → black"></button>
+          <button class="swatch" type="button" data-mode="transparent" title="Transparent"></button>
+          <button class="swatch" type="button" data-mode="white" title="White"></button>
+          <button class="swatch" type="button" data-mode="black" title="Black"></button>
+        </div>
+      </div>
+
+      <div class="control">
+        <label for="gridOpacity">Grid-line opacity: <span id="gridOpacityValue">35%</span></label>
+        <input id="gridOpacity" type="range" min="0" max="100" value="35" />
+      </div>
+
+      <div class="control">
+        <label for="exportScale">PNG export scale</label>
+        <select id="exportScale">
+          <option value="1">210 × 90 px</option>
+          <option value="2">420 × 180 px</option>
+          <option value="4" selected>840 × 360 px</option>
+          <option value="8">1680 × 720 px</option>
+          <option value="16">3360 × 1440 px</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <label for="includeUnderlay">PNG contents</label>
+        <select id="includeUnderlay">
+          <option value="grid-only" selected>Grid only, transparent cells remain transparent</option>
+          <option value="with-underlay">Grid plus underlay image</option>
+        </select>
+      </div>
+
+      <div class="control">
+        <span class="label">History</span>
+        <div class="row">
+          <button id="undoBtn" type="button" disabled>Undo</button>
+          <button id="redoBtn" type="button" disabled>Redo</button>
+        </div>
+      </div>
+
+      <div class="control">
+        <span class="label">Actions</span>
+        <div class="row">
+          <button id="clearBtn" class="danger" type="button">Clear</button>
+          <button id="exportBtn" class="primary" type="button">Export PNG</button>
+        </div>
+      </div>
+    </section>
+  </header>
+
+  <main>
+    <section class="stage-wrap">
+      <div class="stage-top">
+        <div id="status">Grid: 210 columns × 90 rows. Transparent cells: 18,900.</div>
+        <div id="underlayStatus">Underlay: none</div>
+        <div id="cursorReadout">Cell: —</div>
+      </div>
+      <div class="canvas-shell">
+        <canvas id="editor" width="1680" height="720" aria-label="Editable 210 by 90 grid"></canvas>
+      </div>
+      <p class="hint">
+        Click or drag with Brush to paint cells. Bucket fill replaces a contiguous region of matching cells. Line draws a straight grid line from press to release, with live preview. When line snapping is enabled, the start and end points snap to nearby already-painted cells, which lets a new line connect cleanly to an existing line.
+        In Cycle mode, the clicked cell, filled region, or new line advances from transparent to white to black and back to transparent. Hold <kbd>Shift</kbd> while painting, filling, or drawing a line to erase to transparent. Shortcuts: <kbd>1</kbd> Cycle, <kbd>2</kbd> Transparent, <kbd>3</kbd> White, <kbd>4</kbd> Black, <kbd>B</kbd> Brush, <kbd>F</kbd> Fill, <kbd>L</kbd> Line, <kbd>Ctrl/⌘+Z</kbd> Undo, <kbd>Ctrl/⌘+Y</kbd> or <kbd>Ctrl/⌘+Shift+Z</kbd> Redo, <kbd>Ctrl/⌘+S</kbd> Export.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const COLS = 210;
+      const ROWS = 90;
+      const PREVIEW_CELL = 8;
+      const PREVIEW_W = COLS * PREVIEW_CELL;
+      const PREVIEW_H = ROWS * PREVIEW_CELL;
+      const MAX_HISTORY = 120;
+
+      const STATE_TRANSPARENT = 0;
+      const STATE_WHITE = 1;
+      const STATE_BLACK = 2;
+
+      const canvas = document.getElementById('editor');
+      const ctx = canvas.getContext('2d', { alpha: true });
+      const imageInput = document.getElementById('imageInput');
+      const removeUnderlayBtn = document.getElementById('removeUnderlayBtn');
+      const underlayOpacity = document.getElementById('underlayOpacity');
+      const opacityValue = document.getElementById('opacityValue');
+      const gridOpacity = document.getElementById('gridOpacity');
+      const gridOpacityValue = document.getElementById('gridOpacityValue');
+      const lineSnapToggle = document.getElementById('lineSnapToggle');
+      const lineSnapRadius = document.getElementById('lineSnapRadius');
+      const lineSnapRadiusValue = document.getElementById('lineSnapRadiusValue');
+      const exportScale = document.getElementById('exportScale');
+      const includeUnderlay = document.getElementById('includeUnderlay');
+      const clearBtn = document.getElementById('clearBtn');
+      const exportBtn = document.getElementById('exportBtn');
+      const undoBtn = document.getElementById('undoBtn');
+      const redoBtn = document.getElementById('redoBtn');
+      const status = document.getElementById('status');
+      const underlayStatus = document.getElementById('underlayStatus');
+      const cursorReadout = document.getElementById('cursorReadout');
+      const swatches = [...document.querySelectorAll('.swatch')];
+      const toolButtons = [...document.querySelectorAll('.segment')];
+
+      canvas.width = PREVIEW_W;
+      canvas.height = PREVIEW_H;
+
+      const cells = new Uint8Array(COLS * ROWS);
+      let underlayImage = null;
+      let underlayName = '';
+      let paintMode = 'cycle';
+      let activeTool = 'brush';
+      let isPainting = false;
+      let isDrawingLine = false;
+      let lineStartCell = null;
+      let linePreviewCell = null;
+      let linePreviewSnapCell = null;
+      let linePreviewShift = false;
+      let gestureChanged = false;
+      let historyBeforeGesture = null;
+      let lastPaintedIndex = -1;
+      let activePointerId = null;
+      let undoStack = [];
+      let redoStack = [];
+
+      function indexOf(col, row) {
+        return row * COLS + col;
+      }
+
+      function countCells() {
+        let transparent = 0;
+        let white = 0;
+        let black = 0;
+        for (const value of cells) {
+          if (value === STATE_WHITE) white++;
+          else if (value === STATE_BLACK) black++;
+          else transparent++;
+        }
+        status.textContent = `Grid: ${COLS} columns × ${ROWS} rows. Transparent: ${transparent.toLocaleString()} · White: ${white.toLocaleString()} · Black: ${black.toLocaleString()}.`;
+      }
+
+      function updateHistoryButtons() {
+        undoBtn.disabled = undoStack.length === 0;
+        redoBtn.disabled = redoStack.length === 0;
+      }
+
+      function pushUndoSnapshot(snapshot) {
+        if (!snapshot) return;
+        undoStack.push(snapshot);
+        if (undoStack.length > MAX_HISTORY) undoStack.shift();
+        redoStack = [];
+        updateHistoryButtons();
+      }
+
+      function pushCurrentToUndo() {
+        pushUndoSnapshot(cells.slice());
+      }
+
+      function restoreSnapshot(snapshot) {
+        cells.set(snapshot);
+        countCells();
+        render();
+      }
+
+      function undo() {
+        if (!undoStack.length) return;
+        redoStack.push(cells.slice());
+        const snapshot = undoStack.pop();
+        restoreSnapshot(snapshot);
+        updateHistoryButtons();
+      }
+
+      function redo() {
+        if (!redoStack.length) return;
+        undoStack.push(cells.slice());
+        const snapshot = redoStack.pop();
+        restoreSnapshot(snapshot);
+        updateHistoryButtons();
+      }
+
+      function updateUnderlayStatus(message) {
+        if (message) {
+          underlayStatus.textContent = message;
+        } else if (underlayImage) {
+          underlayStatus.textContent = `Underlay: ${underlayName || 'loaded image'} (${underlayImage.width}×${underlayImage.height})`;
+        } else {
+          underlayStatus.textContent = 'Underlay: none';
+        }
+      }
+
+      function getContainRect(img, width, height) {
+        const imageWidth = img.naturalWidth || img.width;
+        const imageHeight = img.naturalHeight || img.height;
+        if (!imageWidth || !imageHeight) return null;
+
+        const imageRatio = imageWidth / imageHeight;
+        const canvasRatio = width / height;
+        let drawW, drawH, drawX, drawY;
+
+        if (imageRatio > canvasRatio) {
+          drawW = width;
+          drawH = width / imageRatio;
+          drawX = 0;
+          drawY = (height - drawH) / 2;
+        } else {
+          drawH = height;
+          drawW = height * imageRatio;
+          drawX = (width - drawW) / 2;
+          drawY = 0;
+        }
+        return { drawX, drawY, drawW, drawH };
+      }
+
+      function drawCheckerboard(context, width, height, size = 16) {
+        context.save();
+        context.fillStyle = '#242832';
+        context.fillRect(0, 0, width, height);
+        context.fillStyle = '#3a3f4d';
+        for (let y = 0; y < height; y += size) {
+          for (let x = 0; x < width; x += size) {
+            if (((x / size) + (y / size)) % 2 === 0) {
+              context.fillRect(x, y, size, size);
+            }
+          }
+        }
+        context.restore();
+      }
+
+      function drawUnderlay(context, width, height, opacity) {
+        if (!underlayImage || opacity <= 0) return;
+        const rect = getContainRect(underlayImage, width, height);
+        if (!rect) return;
+
+        context.save();
+        context.globalAlpha = opacity;
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        context.drawImage(underlayImage, rect.drawX, rect.drawY, rect.drawW, rect.drawH);
+        context.restore();
+      }
+
+      function drawCells(context, cellSize) {
+        context.save();
+        for (let row = 0; row < ROWS; row++) {
+          for (let col = 0; col < COLS; col++) {
+            const state = cells[indexOf(col, row)];
+            if (state === STATE_TRANSPARENT) continue;
+            context.fillStyle = state === STATE_WHITE ? '#ffffff' : '#000000';
+            context.fillRect(col * cellSize, row * cellSize, cellSize, cellSize);
+          }
+        }
+        context.restore();
+      }
+
+      function colorForState(state, alpha = 1) {
+        if (state === STATE_WHITE) return `rgba(255, 255, 255, ${alpha})`;
+        if (state === STATE_BLACK) return `rgba(0, 0, 0, ${alpha})`;
+        return `rgba(255, 119, 119, ${alpha})`;
+      }
+
+      function getLineCells(start, end) {
+        const result = [];
+        let x0 = start.col;
+        let y0 = start.row;
+        const x1 = end.col;
+        const y1 = end.row;
+        const dx = Math.abs(x1 - x0);
+        const sx = x0 < x1 ? 1 : -1;
+        const dy = -Math.abs(y1 - y0);
+        const sy = y0 < y1 ? 1 : -1;
+        let error = dx + dy;
+
+        while (true) {
+          result.push({ col: x0, row: y0, idx: indexOf(x0, y0) });
+          if (x0 === x1 && y0 === y1) break;
+          const doubledError = 2 * error;
+          if (doubledError >= dy) {
+            error += dy;
+            x0 += sx;
+          }
+          if (doubledError <= dx) {
+            error += dx;
+            y0 += sy;
+          }
+        }
+
+        return result;
+      }
+
+      function drawLinePreview(context, cellSize) {
+        if (!isDrawingLine || !lineStartCell || !linePreviewCell) return;
+        const target = linePreviewShift ? STATE_TRANSPARENT : stateForPaint(cells[lineStartCell.idx], null);
+        const previewCells = getLineCells(lineStartCell, linePreviewCell);
+
+        context.save();
+        for (const cell of previewCells) {
+          const x = cell.col * cellSize;
+          const y = cell.row * cellSize;
+          if (target === STATE_TRANSPARENT) {
+            context.fillStyle = colorForState(STATE_TRANSPARENT, 0.28);
+            context.fillRect(x, y, cellSize, cellSize);
+            context.strokeStyle = colorForState(STATE_TRANSPARENT, 0.8);
+            context.strokeRect(x + 1, y + 1, Math.max(1, cellSize - 2), Math.max(1, cellSize - 2));
+          } else {
+            context.fillStyle = colorForState(target, 0.72);
+            context.fillRect(x, y, cellSize, cellSize);
+          }
+        }
+
+        if (linePreviewSnapCell) {
+          context.strokeStyle = 'rgba(116, 167, 255, 0.98)';
+          context.lineWidth = 2;
+          context.strokeRect(
+            linePreviewSnapCell.col * cellSize + 1,
+            linePreviewSnapCell.row * cellSize + 1,
+            Math.max(1, cellSize - 2),
+            Math.max(1, cellSize - 2)
+          );
+        }
+        context.restore();
+      }
+
+      function drawGridLines(context, width, height, cellSize, opacity) {
+        if (opacity <= 0) return;
+
+        context.save();
+        context.strokeStyle = `rgba(116, 167, 255, ${opacity})`;
+        context.lineWidth = 1;
+        context.beginPath();
+
+        for (let x = 0; x <= width; x += cellSize) {
+          context.moveTo(x + 0.5, 0);
+          context.lineTo(x + 0.5, height);
+        }
+        for (let y = 0; y <= height; y += cellSize) {
+          context.moveTo(0, y + 0.5);
+          context.lineTo(width, y + 0.5);
+        }
+        context.stroke();
+        context.restore();
+      }
+
+      function render() {
+        ctx.clearRect(0, 0, PREVIEW_W, PREVIEW_H);
+        drawCheckerboard(ctx, PREVIEW_W, PREVIEW_H, 16);
+        drawUnderlay(ctx, PREVIEW_W, PREVIEW_H, Number(underlayOpacity.value) / 100);
+        drawCells(ctx, PREVIEW_CELL);
+        drawLinePreview(ctx, PREVIEW_CELL);
+        drawGridLines(ctx, PREVIEW_W, PREVIEW_H, PREVIEW_CELL, Number(gridOpacity.value) / 100);
+      }
+
+      function pointToCell(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width;
+        const y = (event.clientY - rect.top) / rect.height;
+        const col = Math.floor(x * COLS);
+        const row = Math.floor(y * ROWS);
+
+        if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return null;
+        return { col, row, idx: indexOf(col, row) };
+      }
+
+      function nextState(current) {
+        if (current === STATE_TRANSPARENT) return STATE_WHITE;
+        if (current === STATE_WHITE) return STATE_BLACK;
+        return STATE_TRANSPARENT;
+      }
+
+      function stateForPaint(current, event) {
+        if (event && event.shiftKey) return STATE_TRANSPARENT;
+        if (paintMode === 'transparent') return STATE_TRANSPARENT;
+        if (paintMode === 'white') return STATE_WHITE;
+        if (paintMode === 'black') return STATE_BLACK;
+        return nextState(current);
+      }
+
+      function paintCell(event) {
+        const cell = pointToCell(event);
+        if (!cell) return;
+        cursorReadout.textContent = `Cell: column ${cell.col + 1}, row ${cell.row + 1}`;
+
+        if (!isPainting || cell.idx === lastPaintedIndex) return;
+        const target = stateForPaint(cells[cell.idx], event);
+        if (cells[cell.idx] !== target) {
+          cells[cell.idx] = target;
+          gestureChanged = true;
+          countCells();
+          render();
+        }
+        lastPaintedIndex = cell.idx;
+      }
+
+      function bucketFill(startIdx, targetState) {
+        const sourceState = cells[startIdx];
+        if (sourceState === targetState) return 0;
+
+        let changed = 0;
+        const stack = [startIdx];
+        const seen = new Uint8Array(cells.length);
+        seen[startIdx] = 1;
+
+        while (stack.length) {
+          const idx = stack.pop();
+          if (cells[idx] !== sourceState) continue;
+
+          cells[idx] = targetState;
+          changed++;
+
+          const col = idx % COLS;
+          const row = Math.floor(idx / COLS);
+          const left = idx - 1;
+          const right = idx + 1;
+          const up = idx - COLS;
+          const down = idx + COLS;
+
+          if (col > 0 && !seen[left]) { seen[left] = 1; stack.push(left); }
+          if (col < COLS - 1 && !seen[right]) { seen[right] = 1; stack.push(right); }
+          if (row > 0 && !seen[up]) { seen[up] = 1; stack.push(up); }
+          if (row < ROWS - 1 && !seen[down]) { seen[down] = 1; stack.push(down); }
+        }
+
+        return changed;
+      }
+
+      function applyFill(event) {
+        const cell = pointToCell(event);
+        if (!cell) return;
+        const target = stateForPaint(cells[cell.idx], event);
+        const before = cells.slice();
+        const changed = bucketFill(cell.idx, target);
+        if (!changed) return;
+        pushUndoSnapshot(before);
+        countCells();
+        render();
+      }
+
+      function getSnapRadius() {
+        return Number(lineSnapRadius.value || 0);
+      }
+
+      function findNearestPaintedCell(cell) {
+        if (!lineSnapToggle.checked) return null;
+        const radius = getSnapRadius();
+        if (radius <= 0) return null;
+
+        let best = null;
+        let bestDistance = Infinity;
+        const minCol = Math.max(0, cell.col - radius);
+        const maxCol = Math.min(COLS - 1, cell.col + radius);
+        const minRow = Math.max(0, cell.row - radius);
+        const maxRow = Math.min(ROWS - 1, cell.row + radius);
+
+        for (let row = minRow; row <= maxRow; row++) {
+          for (let col = minCol; col <= maxCol; col++) {
+            const idx = indexOf(col, row);
+            if (cells[idx] === STATE_TRANSPARENT) continue;
+            const distance = (col - cell.col) ** 2 + (row - cell.row) ** 2;
+            if (distance <= radius ** 2 && distance < bestDistance) {
+              best = { col, row, idx };
+              bestDistance = distance;
+            }
+          }
+        }
+
+        return best;
+      }
+
+      function maybeSnapCell(cell) {
+        if (!cell) return null;
+        return findNearestPaintedCell(cell) || cell;
+      }
+
+      function snapDescription(rawCell, snappedCell) {
+        return rawCell && snappedCell && rawCell.idx !== snappedCell.idx ? ' · snapped' : '';
+      }
+
+      function applyLine(start, end, event) {
+        const target = stateForPaint(cells[start.idx], event);
+        let changed = 0;
+        for (const cell of getLineCells(start, end)) {
+          if (cells[cell.idx] !== target) {
+            cells[cell.idx] = target;
+            changed++;
+          }
+        }
+        return changed;
+      }
+
+      function startLine(event) {
+        const rawCell = pointToCell(event);
+        if (!rawCell) return;
+        const snappedCell = maybeSnapCell(rawCell);
+
+        isDrawingLine = true;
+        lineStartCell = snappedCell;
+        linePreviewCell = snappedCell;
+        linePreviewSnapCell = rawCell.idx !== snappedCell.idx ? snappedCell : null;
+        linePreviewShift = event.shiftKey;
+        historyBeforeGesture = cells.slice();
+        activePointerId = event.pointerId;
+        canvas.setPointerCapture(activePointerId);
+        cursorReadout.textContent = `Line start: column ${snappedCell.col + 1}, row ${snappedCell.row + 1}${snapDescription(rawCell, snappedCell)}`;
+        render();
+      }
+
+      function updateLinePreview(event) {
+        if (!isDrawingLine || !lineStartCell) return;
+        const rawCell = pointToCell(event);
+        if (!rawCell) return;
+        const snappedCell = maybeSnapCell(rawCell);
+        linePreviewCell = snappedCell;
+        linePreviewSnapCell = rawCell.idx !== snappedCell.idx ? snappedCell : null;
+        linePreviewShift = event.shiftKey;
+        cursorReadout.textContent = `Line end: column ${snappedCell.col + 1}, row ${snappedCell.row + 1}${snapDescription(rawCell, snappedCell)}`;
+        render();
+      }
+
+      function finishLine(event) {
+        if (!isDrawingLine || !lineStartCell || !linePreviewCell) {
+          cancelLine();
+          return;
+        }
+
+        const rawCell = pointToCell(event);
+        const endCell = maybeSnapCell(rawCell || linePreviewCell);
+        const before = historyBeforeGesture || cells.slice();
+        const changed = applyLine(lineStartCell, endCell, event);
+
+        isDrawingLine = false;
+        lineStartCell = null;
+        linePreviewCell = null;
+        linePreviewSnapCell = null;
+        linePreviewShift = false;
+        historyBeforeGesture = null;
+
+        if (activePointerId !== null) {
+          try { canvas.releasePointerCapture(activePointerId); } catch (_) {}
+        }
+        activePointerId = null;
+
+        if (changed) {
+          pushUndoSnapshot(before);
+          countCells();
+        }
+        render();
+      }
+
+      function cancelLine() {
+        isDrawingLine = false;
+        lineStartCell = null;
+        linePreviewCell = null;
+        linePreviewSnapCell = null;
+        linePreviewShift = false;
+        historyBeforeGesture = null;
+        if (activePointerId !== null) {
+          try { canvas.releasePointerCapture(activePointerId); } catch (_) {}
+        }
+        activePointerId = null;
+        render();
+      }
+
+      canvas.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        const cell = pointToCell(event);
+        if (!cell) return;
+
+        if (activeTool === 'fill') {
+          applyFill(event);
+          return;
+        }
+
+        if (activeTool === 'line') {
+          startLine(event);
+          return;
+        }
+
+        isPainting = true;
+        gestureChanged = false;
+        historyBeforeGesture = cells.slice();
+        lastPaintedIndex = -1;
+        activePointerId = event.pointerId;
+        canvas.setPointerCapture(activePointerId);
+        paintCell(event);
+      });
+
+      canvas.addEventListener('pointermove', (event) => {
+        const cell = pointToCell(event);
+        if (cell) cursorReadout.textContent = `Cell: column ${cell.col + 1}, row ${cell.row + 1}`;
+        else cursorReadout.textContent = 'Cell: —';
+
+        if (isDrawingLine) updateLinePreview(event);
+        else if (activeTool === 'brush') paintCell(event);
+      });
+
+      function stopPainting() {
+        if (isPainting && gestureChanged) pushUndoSnapshot(historyBeforeGesture);
+        isPainting = false;
+        gestureChanged = false;
+        historyBeforeGesture = null;
+        lastPaintedIndex = -1;
+        if (activePointerId !== null) {
+          try { canvas.releasePointerCapture(activePointerId); } catch (_) {}
+        }
+        activePointerId = null;
+      }
+
+      canvas.addEventListener('pointerup', (event) => {
+        if (isDrawingLine) finishLine(event);
+        else stopPainting();
+      });
+      canvas.addEventListener('pointercancel', () => {
+        if (isDrawingLine) cancelLine();
+        else stopPainting();
+      });
+      canvas.addEventListener('pointerleave', () => {
+        cursorReadout.textContent = 'Cell: —';
+      });
+
+      swatches.forEach((button) => {
+        button.addEventListener('click', () => {
+          paintMode = button.dataset.mode;
+          swatches.forEach((item) => item.classList.toggle('active', item === button));
+        });
+      });
+
+      toolButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          activeTool = button.dataset.tool;
+          toolButtons.forEach((item) => item.classList.toggle('active', item === button));
+          canvas.style.cursor = activeTool === 'fill' ? 'cell' : 'crosshair';
+          if (isDrawingLine && activeTool !== 'line') cancelLine();
+        });
+      });
+
+      function loadImageViaFileReader(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onerror = () => reject(new Error('File could not be read.'));
+          reader.onload = () => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error('File was read, but the browser could not decode it as an image.'));
+            img.src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      imageInput.addEventListener('change', async () => {
+        const file = imageInput.files && imageInput.files[0];
+        if (!file) return;
+
+        updateUnderlayStatus(`Underlay: loading ${file.name}…`);
+        try {
+          underlayImage = await loadImageViaFileReader(file);
+          underlayName = file.name;
+          updateUnderlayStatus();
+          render();
+        } catch (error) {
+          underlayImage = null;
+          underlayName = '';
+          updateUnderlayStatus(`Underlay: failed to load ${file.name}`);
+          alert(error.message || 'The selected file could not be loaded as an image.');
+          render();
+        }
+      });
+
+      removeUnderlayBtn.addEventListener('click', () => {
+        underlayImage = null;
+        underlayName = '';
+        imageInput.value = '';
+        updateUnderlayStatus();
+        render();
+      });
+
+      underlayOpacity.addEventListener('input', () => {
+        opacityValue.textContent = `${underlayOpacity.value}%`;
+        render();
+      });
+
+      gridOpacity.addEventListener('input', () => {
+        gridOpacityValue.textContent = `${gridOpacity.value}%`;
+        render();
+      });
+
+      lineSnapRadius.addEventListener('input', () => {
+        lineSnapRadiusValue.textContent = lineSnapRadius.value;
+        if (isDrawingLine) render();
+      });
+
+      lineSnapToggle.addEventListener('change', () => {
+        if (isDrawingLine) render();
+      });
+
+      clearBtn.addEventListener('click', () => {
+        let hasNonTransparent = false;
+        for (const value of cells) {
+          if (value !== STATE_TRANSPARENT) {
+            hasNonTransparent = true;
+            break;
+          }
+        }
+        if (!hasNonTransparent) return;
+        if (!confirm('Clear all grid cells to transparent?')) return;
+        pushCurrentToUndo();
+        cells.fill(STATE_TRANSPARENT);
+        countCells();
+        render();
+      });
+
+      undoBtn.addEventListener('click', undo);
+      redoBtn.addEventListener('click', redo);
+
+      function renderExportCanvas() {
+        const scale = Number(exportScale.value);
+        const output = document.createElement('canvas');
+        output.width = COLS * scale;
+        output.height = ROWS * scale;
+        const out = output.getContext('2d', { alpha: true });
+        out.clearRect(0, 0, output.width, output.height);
+
+        if (includeUnderlay.value === 'with-underlay') {
+          drawUnderlay(out, output.width, output.height, Number(underlayOpacity.value) / 100);
+        }
+
+        drawCells(out, scale);
+        return output;
+      }
+
+      function downloadCanvasAsPng(canvasToDownload) {
+        canvasToDownload.toBlob((blob) => {
+          if (!blob) {
+            alert('PNG export failed.');
+            return;
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+          a.href = url;
+          a.download = `grid-210x90-${stamp}.png`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      }
+
+      exportBtn.addEventListener('click', () => {
+        downloadCanvasAsPng(renderExportCanvas());
+      });
+
+      window.addEventListener('keydown', (event) => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+        const key = event.key.toLowerCase();
+        const mod = event.ctrlKey || event.metaKey;
+
+        if (mod && key === 's') {
+          event.preventDefault();
+          exportBtn.click();
+          return;
+        }
+        if (mod && key === 'z' && event.shiftKey) {
+          event.preventDefault();
+          redo();
+          return;
+        }
+        if (mod && key === 'z') {
+          event.preventDefault();
+          undo();
+          return;
+        }
+        if (mod && key === 'y') {
+          event.preventDefault();
+          redo();
+          return;
+        }
+
+        if (event.key === '1') swatches.find((b) => b.dataset.mode === 'cycle').click();
+        if (event.key === '2') swatches.find((b) => b.dataset.mode === 'transparent').click();
+        if (event.key === '3') swatches.find((b) => b.dataset.mode === 'white').click();
+        if (event.key === '4') swatches.find((b) => b.dataset.mode === 'black').click();
+        if (key === 'b') toolButtons.find((b) => b.dataset.tool === 'brush').click();
+        if (key === 'f') toolButtons.find((b) => b.dataset.tool === 'fill').click();
+        if (key === 'l') toolButtons.find((b) => b.dataset.tool === 'line').click();
+      });
+
+      updateHistoryButtons();
+      updateUnderlayStatus();
+      countCells();
+      render();
+    })();
+  </script>
+</body>
+</html>
