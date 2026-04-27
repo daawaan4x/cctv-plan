@@ -1,3 +1,5 @@
+"""Load traced floor-plan assets plus metadata into validated planner inputs."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -11,6 +13,8 @@ from .validator import validate_traced_palette
 
 
 def load_traced_floorplan(path: PathLikeStr) -> FloorPlanInput:
+    """Load one traced PNG floor plan and decode it into a `FloorPlanInput`."""
+
     source_path = Path(path).expanduser().resolve()
     metadata = load_traced_floorplan_metadata(source_path)
     rgba_image = read_rgba_image(source_path)
@@ -36,6 +40,8 @@ def load_traced_floorplan(path: PathLikeStr) -> FloorPlanInput:
 
 
 def load_traced_floorplans(directory: PathLikeStr) -> dict[str, FloorPlanInput]:
+    """Load every traced PNG floor plan in a directory keyed by stem name."""
+
     directory_path = Path(directory).expanduser().resolve()
     if not directory_path.exists():
         raise FileNotFoundError(

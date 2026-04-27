@@ -1,3 +1,5 @@
+"""Read sibling JSON metadata required by traced floor-plan PNG assets."""
+
 from __future__ import annotations
 
 import json
@@ -10,16 +12,24 @@ from ..floorplan import PathLikeStr
 
 @dataclass(frozen=True, slots=True)
 class TracedFloorPlanMetadata:
+    """Normalized metadata loaded from a traced floor-plan sibling JSON file."""
+
     source_path: Path
     metadata_path: Path
     grid_cell_size_m: float | None
 
 
 def get_traced_floorplan_metadata_path(source_path: PathLikeStr) -> Path:
+    """Return the required sibling JSON path for a traced floor-plan PNG."""
+
     return Path(source_path).expanduser().resolve().with_suffix(".json")
 
 
 def load_traced_floorplan_metadata(source_path: PathLikeStr) -> TracedFloorPlanMetadata:
+    """Load and validate the traced floor-plan metadata JSON payload."""
+
+    # Resolve the PNG path first so both direct file loads and directory scans
+    # always derive the sibling JSON location from the same canonical absolute path.
     source_path_resolved = Path(source_path).expanduser().resolve()
     metadata_path = get_traced_floorplan_metadata_path(source_path_resolved)
 
@@ -48,6 +58,9 @@ def load_traced_floorplan_metadata(source_path: PathLikeStr) -> TracedFloorPlanM
             f"{metadata_path}"
         )
 
+    # Reject booleans explicitly even though `bool` is an `int` subtype in Python.
+    # The project uses this field as a real geometric scale later, so accepting
+    # `true`/`false` would silently turn malformed metadata into `1.0` or `0.0`.
     raw_grid_cell_size_m = payload["grid_cell_size_m"]
     if raw_grid_cell_size_m is None:
         grid_cell_size_m = None

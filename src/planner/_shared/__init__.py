@@ -1,4 +1,4 @@
-from .bootstrap import ensure_repo_on_sys_path, find_repo_root, get_traced_floorplan_path
+from .bootstrap import find_repo_root, get_traced_floorplan_path
 from .cache import (
     build_artifact_manifest,
     build_config_fingerprint,
@@ -15,7 +15,6 @@ __all__ = [
     "build_artifact_manifest",
     "build_config_fingerprint",
     "ensure_artifact_dir",
-    "ensure_repo_on_sys_path",
     "find_repo_root",
     "get_traced_floorplan_path",
     "write_json",

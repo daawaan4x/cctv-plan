@@ -1,3 +1,5 @@
+"""Phase 05 visualization metric containers derived from solver results."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -8,6 +10,8 @@ PHASE_ARTIFACT_STEM = "05_metrics"
 
 @dataclass(frozen=True, slots=True)
 class CoverageMetrics:
+    """Summary metrics over open cells only for one optimization result."""
+
     total_dori_score: float
     detection_plus_pct: float
     observation_plus_pct: float

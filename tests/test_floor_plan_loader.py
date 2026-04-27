@@ -1,3 +1,5 @@
+"""Tests for traced floor-plan loading, palette validation, and plotting."""
+
 from __future__ import annotations
 
 import shutil
@@ -26,10 +28,13 @@ from src.common.floorplan import (
 )
 from src.common.floorplan_loader import load_traced_floorplan, load_traced_floorplans
 
+# Repo-local test scratch space
 _TEST_TEMP_ROOT = Path(__file__).resolve().parents[1] / ".tmp-test-workdir"
 
 
 def _write_rgba_png(path: Path, rgba: np.ndarray) -> None:
+    """Write a minimal RGBA PNG file for loader tests without extra dependencies."""
+
     if rgba.dtype != np.uint8:
         raise TypeError("PNG test helper expects uint8 RGBA input.")
     if rgba.ndim != 3 or rgba.shape[2] != 4:
@@ -48,6 +53,9 @@ def _write_rgba_png(path: Path, rgba: np.ndarray) -> None:
         crc = zlib.crc32(tag + data) & 0xFFFFFFFF
         return payload + struct.pack(">I", crc)
 
+    # Building the PNG by hand keeps the tests lightweight and deterministic. The
+    # loader only needs a valid RGBA PNG container, so depending on Pillow here
+    # would add packaging noise without improving test intent.
     png_bytes = b"".join(
         [
             b"\x89PNG\r\n\x1a\n",
@@ -60,6 +68,8 @@ def _write_rgba_png(path: Path, rgba: np.ndarray) -> None:
 
 
 def _write_floorplan_metadata(path: Path, *, grid_cell_size_m: float | None) -> None:
+    """Write the sibling JSON metadata file expected by the traced loader."""
+
     metadata_path = path.with_suffix(".json")
     metadata_path.write_text(
         json.dumps({"grid_cell_size_m": grid_cell_size_m}, indent=2) + "\n",
@@ -69,7 +79,11 @@ def _write_floorplan_metadata(path: Path, *, grid_cell_size_m: float | None) -> 
 
 @contextmanager
 def _workspace_temp_dir() -> Iterator[Path]:
+    """Provide an isolated temporary workspace under the repo-local test root."""
+
     _TEST_TEMP_ROOT.mkdir(exist_ok=True)
+    # These tests avoid the system temp directory because the sandbox user does not
+    # always have stable write/reopen permissions there on Windows.
     temp_dir = _TEST_TEMP_ROOT / f"case-{uuid4().hex}"
     temp_dir.mkdir()
     try:
@@ -79,7 +93,11 @@ def _workspace_temp_dir() -> Iterator[Path]:
 
 
 class FloorPlanLoaderTests(unittest.TestCase):
+    """Exercise the traced PNG loading path and its validation guarantees."""
+
     def test_load_traced_floorplan_decodes_tri_state_grid(self) -> None:
+        # Use one tiny fixture that hits all three locked cell semantics at once:
+        # transparent -> null, white -> open, black -> solid.
         with _workspace_temp_dir() as temp_dir:
             image_path = temp_dir / "sample.png"
             rgba = np.array(

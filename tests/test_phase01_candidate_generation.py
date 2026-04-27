@@ -1,3 +1,5 @@
+"""Tests for deterministic phase-01 open-target and candidate generation."""
+
 from __future__ import annotations
 
 import tempfile
@@ -16,7 +18,10 @@ from src.planner.phase01_candidate_generation import (
 )
 
 
+# Small tri-state fixture
 def _build_floorplan() -> FloorPlanInput:
+    """Build a small tri-state grid that exercises the candidate boundary rule."""
+
     grid = np.array(
         [
             [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
@@ -40,9 +45,14 @@ def _build_floorplan() -> FloorPlanInput:
 
 
 class CandidateGenerationTests(unittest.TestCase):
+    """Verify the stored phase-01 artifacts against the locked candidate rules."""
+
     def test_generate_candidate_generation_artifacts_builds_expected_sets(self) -> None:
         floorplan = _build_floorplan()
 
+        # The expected sets are written as flat indices and `(row, col)` pairs so
+        # the test locks down both the canonical cross-phase identity and the more
+        # human-readable geometry view of the same candidate cells.
         artifacts = generate_candidate_generation_artifacts(floorplan)
 
         expected_open_indices = np.array([6, 7, 11, 12, 13, 17, 18], dtype=np.int32)

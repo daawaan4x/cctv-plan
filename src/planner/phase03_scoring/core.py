@@ -1,3 +1,5 @@
+"""Phase 03 scoring artifact containers for sparse DORI score outputs."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,6 +13,8 @@ PHASE_ARTIFACT_STEM = "03_sparse_scores"
 
 @dataclass(frozen=True, slots=True)
 class SparseScoreArtifacts:
+    """Sparse camera-target scoring arrays for valid non-zero DORI pairs."""
+
     configuration_indices: NDArray[np.int32]
     target_indices: NDArray[np.int32]
     dori_scores: NDArray[np.int8]

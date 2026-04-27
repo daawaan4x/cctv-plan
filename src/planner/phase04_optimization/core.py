@@ -1,3 +1,5 @@
+"""Phase 04 optimization artifact containers for solver outputs."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,6 +13,8 @@ PHASE_ARTIFACT_STEM = "04_solution"
 
 @dataclass(frozen=True, slots=True)
 class OptimizationArtifacts:
+    """Selected camera configurations and final per-open-cell DORI scores."""
+
     selected_configuration_indices: NDArray[np.int32]
     final_open_cell_scores: NDArray[np.int8]
 

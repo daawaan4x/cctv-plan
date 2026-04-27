@@ -1,3 +1,5 @@
+"""Workspace-loading helpers for the planner notebooks and scripts."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,16 +13,25 @@ from ._shared.cache import ensure_artifact_dir, write_manifest
 from ._shared.config import PlannerConfig
 
 
+# Workspace bundle
 @dataclass(frozen=True, slots=True)
 class PlannerWorkspace:
+    """Bundle the resolved repo root, floor plan, config, and artifact directory."""
+
     repo_root: Path
     floorplan: FloorPlanInput
     config: PlannerConfig
     artifact_dir: Path
 
 
+# Workspace loading
 def load_workspace(config: PlannerConfig | None = None) -> PlannerWorkspace:
+    """Resolve the default planner workspace for the configured traced floor plan."""
+
     resolved_config = config or PlannerConfig()
+    # The workspace loader is the single choke point where repo layout, floor-plan
+    # metadata, and artifact cache setup come together. Later phase notebooks can
+    # assume these invariants instead of rediscovering paths in each notebook.
     repo_root = find_repo_root()
     floorplan_path = get_traced_floorplan_path(
         resolved_config.floorplan_name,
@@ -40,7 +51,10 @@ def load_workspace(config: PlannerConfig | None = None) -> PlannerWorkspace:
     )
 
 
+# Workspace persistence
 def write_workspace_manifest(workspace: PlannerWorkspace) -> Path:
+    """Write the standard artifact manifest for an already loaded workspace."""
+
     return write_manifest(
         workspace.floorplan,
         workspace.config,

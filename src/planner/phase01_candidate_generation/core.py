@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Phase 01 candidate-generation helpers for the CCTV planner."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path

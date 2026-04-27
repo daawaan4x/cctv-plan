@@ -1,29 +1,32 @@
+"""Small path-resolution helpers shared by planner scripts and notebooks."""
+
 from __future__ import annotations
 
 from pathlib import Path
-import sys
 
 
+# Repository path discovery
 def find_repo_root(start: Path | None = None) -> Path:
+    """Walk upward until the repository root containing `pyproject.toml` is found."""
+
     current = (start or Path.cwd()).resolve()
+    # The repo is identified by both `pyproject.toml` and `src/` so that an
+    # unrelated ancestor directory with only one of those names does not get
+    # misidentified as the planner workspace root.
     for candidate in (current, *current.parents):
         if (candidate / "pyproject.toml").exists() and (candidate / "src").exists():
             return candidate
     raise FileNotFoundError("Could not locate the repository root from the current path.")
 
 
-def ensure_repo_on_sys_path(start: Path | None = None) -> Path:
-    repo_root = find_repo_root(start)
-    if str(repo_root) not in sys.path:
-        sys.path.insert(0, str(repo_root))
-    return repo_root
-
-
+# Static asset resolution
 def get_traced_floorplan_path(
     floorplan_name: str,
     *,
     repo_root: Path | None = None,
 ) -> Path:
+    """Return the traced PNG path for one named floor plan in the repo assets."""
+
     resolved_repo_root = repo_root or find_repo_root()
     return (
         resolved_repo_root
@@ -35,7 +38,6 @@ def get_traced_floorplan_path(
 
 
 __all__ = [
-    "ensure_repo_on_sys_path",
     "find_repo_root",
     "get_traced_floorplan_path",
 ]

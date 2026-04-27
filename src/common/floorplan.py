@@ -1,3 +1,5 @@
+"""Common tri-state floor-plan data structures used by the planner."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,6 +13,7 @@ from numpy.typing import NDArray
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
 
+# Locked tri-state occupancy values used throughout the planner.
 NULL_CELL = np.int8(-1)
 OPEN_CELL = np.int8(0)
 SOLID_CELL = np.int8(1)
@@ -24,6 +27,8 @@ class TracedFloorPlanValidationError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class FloorPlanInput:
+    """Validated optimization input derived from a traced floor-plan asset."""
+
     name: str
     source_path: Path
     grid: NDArray[np.int8]
@@ -35,6 +40,11 @@ class FloorPlanInput:
     grid_cell_size_m: float | None = None
 
     def __post_init__(self) -> None:
+        """Enforce the locked tri-state grid shape and count invariants."""
+
+        # Downstream planner phases assume a compact 2D `int8` grid with the exact
+        # locked cell encoding. Validating that shape here prevents every later phase
+        # from repeating the same structural checks.
         if self.grid.dtype != np.int8:
             raise TypeError("FloorPlanInput.grid must use dtype np.int8.")
         if self.grid.ndim != 2:
@@ -52,18 +62,26 @@ class FloorPlanInput:
 
     @property
     def shape(self) -> tuple[int, int]:
+        """Return the `(height, width)` shape of the tri-state grid."""
+
         return self.grid.shape
 
     @property
     def null_mask(self) -> NDArray[np.bool_]:
+        """Return a boolean mask for null or out-of-bounds cells."""
+
         return self.grid == NULL_CELL
 
     @property
     def open_mask(self) -> NDArray[np.bool_]:
+        """Return a boolean mask for open surveillance target cells."""
+
         return self.grid == OPEN_CELL
 
     @property
     def solid_mask(self) -> NDArray[np.bool_]:
+        """Return a boolean mask for solid blocking cells."""
+
         return self.grid == SOLID_CELL
 
     def plot(
@@ -73,6 +91,10 @@ class FloorPlanInput:
         title: str | None = None,
         show_colorbar: bool = True,
     ) -> Axes:
+        """Render the tri-state grid with distinct colors for null, open, and solid."""
+
+        # Import matplotlib lazily so the core data model stays usable in
+        # non-plotting contexts such as tests, notebooks, and future CLI stages.
         try:
             from matplotlib import pyplot as plt
             from matplotlib.axes import Axes
@@ -89,6 +111,9 @@ class FloorPlanInput:
         else:
             raise TypeError("ax must be a matplotlib.axes.Axes instance or None.")
 
+        # The colormap order intentionally matches the fixed cell values
+        # `[-1, 0, 1]` so visualization does not silently drift from the planner's
+        # semantics when null and blind-spot states are discussed later.
         cmap = ListedColormap(["#bdbdbd", "#ffffff", "#111111"])
         norm = BoundaryNorm([-1.5, -0.5, 0.5, 1.5], cmap.N)
         image = plot_axis.imshow(
