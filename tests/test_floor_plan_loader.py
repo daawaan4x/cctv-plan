@@ -1,0 +1,210 @@
+from __future__ import annotations
+
+import shutil
+import struct
+import unittest
+import zlib
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Iterator
+from uuid import uuid4
+
+import matplotlib
+import numpy as np
+
+matplotlib.use("Agg")
+
+from matplotlib import pyplot as plt
+
+from src.common.floorplan import (
+    FloorPlanInput,
+    NULL_CELL,
+    OPEN_CELL,
+    SOLID_CELL,
+    TracedFloorPlanValidationError,
+)
+from src.common.floorplan_loader import load_traced_floorplan, load_traced_floorplans
+
+_TEST_TEMP_ROOT = Path(__file__).resolve().parents[1] / ".tmp-test-workdir"
+
+
+def _write_rgba_png(path: Path, rgba: np.ndarray) -> None:
+    if rgba.dtype != np.uint8:
+        raise TypeError("PNG test helper expects uint8 RGBA input.")
+    if rgba.ndim != 3 or rgba.shape[2] != 4:
+        raise ValueError("PNG test helper expects shape (H, W, 4).")
+
+    height, width, _ = rgba.shape
+    raw_scanlines = bytearray()
+    for row in rgba:
+        raw_scanlines.append(0)
+        raw_scanlines.extend(row.tobytes())
+
+    compressed = zlib.compress(bytes(raw_scanlines))
+
+    def chunk(tag: bytes, data: bytes) -> bytes:
+        payload = struct.pack(">I", len(data)) + tag + data
+        crc = zlib.crc32(tag + data) & 0xFFFFFFFF
+        return payload + struct.pack(">I", crc)
+
+    png_bytes = b"".join(
+        [
+            b"\x89PNG\r\n\x1a\n",
+            chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)),
+            chunk(b"IDAT", compressed),
+            chunk(b"IEND", b""),
+        ]
+    )
+    path.write_bytes(png_bytes)
+
+
+@contextmanager
+def _workspace_temp_dir() -> Iterator[Path]:
+    _TEST_TEMP_ROOT.mkdir(exist_ok=True)
+    temp_dir = _TEST_TEMP_ROOT / f"case-{uuid4().hex}"
+    temp_dir.mkdir()
+    try:
+        yield temp_dir
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+class FloorPlanLoaderTests(unittest.TestCase):
+    def test_load_traced_floorplan_decodes_tri_state_grid(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "sample.png"
+            rgba = np.array(
+                [
+                    [[0, 0, 0, 0], [255, 255, 255, 255]],
+                    [[0, 0, 0, 255], [255, 255, 255, 255]],
+                ],
+                dtype=np.uint8,
+            )
+            _write_rgba_png(image_path, rgba)
+
+            floorplan = load_traced_floorplan(
+                image_path,
+                meters_per_pixel=0.2,
+                grid_cell_size_m=0.5,
+            )
+
+        expected_grid = np.array(
+            [
+                [NULL_CELL, OPEN_CELL],
+                [SOLID_CELL, OPEN_CELL],
+            ],
+            dtype=np.int8,
+        )
+        np.testing.assert_array_equal(floorplan.grid, expected_grid)
+        self.assertEqual(floorplan.shape, (2, 2))
+        self.assertEqual(floorplan.null_cell_count, 1)
+        self.assertEqual(floorplan.open_cell_count, 2)
+        self.assertEqual(floorplan.solid_cell_count, 1)
+        self.assertEqual(floorplan.meters_per_pixel, 0.2)
+        self.assertEqual(floorplan.grid_cell_size_m, 0.5)
+        np.testing.assert_array_equal(
+            floorplan.open_mask,
+            np.array([[False, True], [False, True]]),
+        )
+
+    def test_load_traced_floorplans_returns_sorted_names(self) -> None:
+        with _workspace_temp_dir() as traced_dir:
+            transparent = np.array([0, 0, 0, 0], dtype=np.uint8)
+            white = np.array([255, 255, 255, 255], dtype=np.uint8)
+
+            _write_rgba_png(
+                traced_dir / "b-room.png",
+                np.array([[transparent]], dtype=np.uint8),
+            )
+            _write_rgba_png(
+                traced_dir / "a-room.png",
+                np.array([[white]], dtype=np.uint8),
+            )
+
+            floorplans = load_traced_floorplans(traced_dir)
+
+        self.assertEqual(list(floorplans.keys()), ["a-room", "b-room"])
+        self.assertEqual(floorplans["a-room"].open_cell_count, 1)
+        self.assertEqual(floorplans["b-room"].null_cell_count, 1)
+
+    def test_load_traced_floorplan_rejects_unexpected_opaque_color(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "invalid-color.png"
+            rgba = np.array([[[255, 0, 0, 255]]], dtype=np.uint8)
+            _write_rgba_png(image_path, rgba)
+
+            with self.assertRaisesRegex(
+                TracedFloorPlanValidationError,
+                r"unexpected opaque color.*row 0, col 0.*pixel=\(255, 0, 0, 255\)",
+            ):
+                load_traced_floorplan(image_path)
+
+    def test_load_traced_floorplan_rejects_partial_transparency(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "partial-alpha.png"
+            rgba = np.array([[[255, 255, 255, 128]]], dtype=np.uint8)
+            _write_rgba_png(image_path, rgba)
+
+            with self.assertRaisesRegex(
+                TracedFloorPlanValidationError,
+                r"partial transparency is not allowed.*row 0, col 0.*pixel=\(255, 255, 255, 128\)",
+            ):
+                load_traced_floorplan(image_path)
+
+    def test_existing_ground_back_asset_decodes_to_only_locked_cell_values(
+        self,
+    ) -> None:
+        asset_path = (
+            Path(__file__).resolve().parents[1]
+            / "static"
+            / "floor-plan"
+            / "traced"
+            / "ground-back.png"
+        )
+        floorplan = load_traced_floorplan(asset_path)
+
+        unique_values = set(np.unique(floorplan.grid).tolist())
+        self.assertEqual(
+            unique_values, {int(NULL_CELL), int(OPEN_CELL), int(SOLID_CELL)}
+        )
+        self.assertEqual(
+            floorplan.null_cell_count
+            + floorplan.open_cell_count
+            + floorplan.solid_cell_count,
+            floorplan.height * floorplan.width,
+        )
+
+    def test_floorplan_plot_displays_loaded_grid(self) -> None:
+        floorplan = FloorPlanInput(
+            name="plot-check",
+            source_path=Path("plot-check.png"),
+            grid=np.array(
+                [
+                    [NULL_CELL, OPEN_CELL],
+                    [SOLID_CELL, OPEN_CELL],
+                ],
+                dtype=np.int8,
+            ),
+            height=2,
+            width=2,
+            null_cell_count=1,
+            open_cell_count=2,
+            solid_cell_count=1,
+        )
+
+        figure, axis = plt.subplots()
+        returned_axis = floorplan.plot(
+            ax=axis, title="Loader Check", show_colorbar=False
+        )
+
+        self.assertIs(returned_axis, axis)
+        self.assertEqual(axis.get_title(), "Loader Check")
+        self.assertEqual(len(axis.images), 1)
+        np.testing.assert_array_equal(
+            np.asarray(axis.images[0].get_array()), floorplan.grid
+        )
+        plt.close(figure)
+
+
+if __name__ == "__main__":
+    unittest.main()

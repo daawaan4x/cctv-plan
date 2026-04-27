@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=82"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "cctv-plan"
 version = "0.1.0"
@@ -5,6 +9,13 @@ description = "Optimization problem solution for CCTV coverage"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "ipykernel>=6.30.1",
+    "jupyterlab>=4.4.7",
+    "matplotlib>=3.10.7",
+    "numpy>=2.4.4",
     "pyright>=1.1.409",
     "ruff>=0.15.12",
 ]
+
+[tool.setuptools.packages.find]
+include = ["src*"]
