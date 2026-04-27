@@ -1,0 +1,10 @@
+[project]
+name = "cctv-plan"
+version = "0.1.0"
+description = "Optimization problem solution for CCTV coverage"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyright>=1.1.409",
+    "ruff>=0.15.12",
+]
