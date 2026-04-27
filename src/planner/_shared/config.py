@@ -20,7 +20,7 @@ class PlannerConfig:
     camera_horizontal_resolution_px: int = 1920
     camera_horizontal_fov_deg: float = 90.0
     orientation_step_deg: int = 15
-    k_values: tuple[int, ...] = (1, 2, 3, 4, 5)
+    k_values: tuple[int, ...] = (10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
     artifact_cache_root: str = "artifacts/planner"
     dori_thresholds: DoriThresholds = field(default_factory=DoriThresholds)
 
