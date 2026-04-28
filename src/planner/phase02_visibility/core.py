@@ -10,8 +10,12 @@ from numba import njit
 from numpy.typing import NDArray
 
 from src.common.floorplan import FloorPlanInput, OPEN_CELL
-from src.planner._shared.cache import write_npz
-from src.planner.phase01_candidate_generation import CandidateGenerationArtifacts
+from src.planner._shared.cache import get_shared_artifact_dir, write_npz
+from src.planner._shared.config import PlannerConfig
+from src.planner.phase01_candidate_generation import (
+    CandidateGenerationArtifacts,
+    resolve_candidate_generation_artifacts,
+)
 
 PHASE_NAME = "visibility"
 PHASE_ARTIFACT_STEM = "02_visibility"
@@ -75,6 +79,38 @@ def generate_visibility_artifacts(
         diagonal_target_ordinals=diagonal_target_ordinals,
     )
     validate_visibility_artifacts(floorplan, phase01_artifacts, artifacts)
+    return artifacts
+
+
+def resolve_visibility_artifacts(
+    floorplan: FloorPlanInput,
+    config: PlannerConfig,
+    *,
+    repo_root: Path,
+    force: bool = False,
+) -> VisibilityArtifacts:
+    """Load, validate, or rebuild the canonical cached phase-02 artifact."""
+
+    phase01_artifacts = resolve_candidate_generation_artifacts(
+        floorplan,
+        config,
+        repo_root=repo_root,
+        force=force,
+    )
+    artifact_path = (
+        get_shared_artifact_dir(floorplan, config, repo_root=repo_root)
+        / f"{PHASE_ARTIFACT_STEM}.npz"
+    )
+    if not force and artifact_path.exists():
+        try:
+            artifacts = load_visibility_artifacts(artifact_path)
+            validate_visibility_artifacts(floorplan, phase01_artifacts, artifacts)
+            return artifacts
+        except (KeyError, TypeError, ValueError):
+            pass
+
+    artifacts = generate_visibility_artifacts(floorplan, phase01_artifacts)
+    save_visibility_artifacts(artifact_path, artifacts)
     return artifacts
 
 
@@ -670,6 +706,7 @@ __all__ = [
     "get_diagonal_blocked_target_ordinals",
     "get_visible_target_ordinals",
     "load_visibility_artifacts",
+    "resolve_visibility_artifacts",
     "save_visibility_artifacts",
     "validate_visibility_artifacts",
 ]

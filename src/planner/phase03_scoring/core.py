@@ -10,12 +10,16 @@ import numpy as np
 from numpy.typing import NDArray
 
 from src.common.floorplan import FloorPlanInput
-from src.planner._shared.cache import write_npz
+from src.planner._shared.cache import get_shared_artifact_dir, write_npz
 from src.planner._shared.config import DoriThresholds, PlannerConfig
-from src.planner.phase01_candidate_generation import CandidateGenerationArtifacts
+from src.planner.phase01_candidate_generation import (
+    CandidateGenerationArtifacts,
+    resolve_candidate_generation_artifacts,
+)
 from src.planner.phase02_visibility import (
     VisibilityArtifacts,
     get_visible_target_ordinals,
+    resolve_visibility_artifacts,
 )
 
 PHASE_NAME = "scoring"
@@ -149,6 +153,55 @@ def generate_sparse_score_artifacts(
         phase02_artifacts,
         artifacts,
     )
+    return artifacts
+
+
+def resolve_sparse_score_artifacts(
+    floorplan: FloorPlanInput,
+    config: PlannerConfig,
+    *,
+    repo_root: Path,
+    force: bool = False,
+) -> SparseScoreArtifacts:
+    """Load, validate, or rebuild the canonical cached phase-03 artifact."""
+
+    phase01_artifacts = resolve_candidate_generation_artifacts(
+        floorplan,
+        config,
+        repo_root=repo_root,
+        force=force,
+    )
+    phase02_artifacts = resolve_visibility_artifacts(
+        floorplan,
+        config,
+        repo_root=repo_root,
+        force=force,
+    )
+    artifact_path = (
+        get_shared_artifact_dir(floorplan, config, repo_root=repo_root)
+        / f"{PHASE_ARTIFACT_STEM}.npz"
+    )
+    if not force and artifact_path.exists():
+        try:
+            artifacts = load_sparse_score_artifacts(artifact_path)
+            validate_sparse_score_artifacts(
+                floorplan,
+                config,
+                phase01_artifacts,
+                phase02_artifacts,
+                artifacts,
+            )
+            return artifacts
+        except (KeyError, TypeError, ValueError):
+            pass
+
+    artifacts = generate_sparse_score_artifacts(
+        floorplan,
+        config,
+        phase01_artifacts,
+        phase02_artifacts,
+    )
+    save_sparse_score_artifacts(artifact_path, artifacts)
     return artifacts
 
 

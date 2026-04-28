@@ -9,7 +9,7 @@ from src.common.floorplan import FloorPlanInput
 from src.common.floorplan_loader import load_traced_floorplan
 
 from ._shared.bootstrap import find_repo_root, get_traced_floorplan_path
-from ._shared.cache import ensure_artifact_dir, write_manifest
+from ._shared.cache import ensure_shared_artifact_dir, write_manifest
 from ._shared.config import PlannerConfig
 
 
@@ -38,7 +38,7 @@ def load_workspace(config: PlannerConfig | None = None) -> PlannerWorkspace:
         repo_root=repo_root,
     )
     floorplan = load_traced_floorplan(floorplan_path)
-    artifact_dir = ensure_artifact_dir(
+    artifact_dir = ensure_shared_artifact_dir(
         floorplan,
         resolved_config,
         repo_root=repo_root,

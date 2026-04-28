@@ -7,6 +7,7 @@ from .core import (
     get_configuration_dori_scores,
     get_configuration_target_ordinals,
     load_sparse_score_artifacts,
+    resolve_sparse_score_artifacts,
     save_sparse_score_artifacts,
     validate_sparse_score_artifacts,
 )
@@ -20,6 +21,7 @@ __all__ = [
     "get_configuration_dori_scores",
     "get_configuration_target_ordinals",
     "load_sparse_score_artifacts",
+    "resolve_sparse_score_artifacts",
     "save_sparse_score_artifacts",
     "validate_sparse_score_artifacts",
 ]

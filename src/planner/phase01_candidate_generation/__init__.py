@@ -4,6 +4,7 @@ from .core import (
     PHASE_NAME,
     generate_candidate_generation_artifacts,
     load_candidate_generation_artifacts,
+    resolve_candidate_generation_artifacts,
     save_candidate_generation_artifacts,
     validate_candidate_generation_artifacts,
 )
@@ -14,6 +15,7 @@ __all__ = [
     "PHASE_NAME",
     "generate_candidate_generation_artifacts",
     "load_candidate_generation_artifacts",
+    "resolve_candidate_generation_artifacts",
     "save_candidate_generation_artifacts",
     "validate_candidate_generation_artifacts",
 ]

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 
@@ -37,7 +38,24 @@ def get_traced_floorplan_path(
     )
 
 
+def list_traced_floorplan_names(
+    *,
+    repo_root: Path | None = None,
+) -> tuple[str, ...]:
+    """Return the traced floor-plan names available under the repo assets."""
+
+    resolved_repo_root = repo_root or find_repo_root()
+    traced_dir = resolved_repo_root / "static" / "floor-plan" / "traced"
+    floorplan_names: list[str] = []
+    for traced_png_path in sorted(traced_dir.glob("*.png")):
+        metadata_path = traced_png_path.with_suffix(".json")
+        if metadata_path.exists():
+            floorplan_names.append(traced_png_path.stem)
+    return tuple(floorplan_names)
+
+
 __all__ = [
     "find_repo_root",
     "get_traced_floorplan_path",
+    "list_traced_floorplan_names",
 ]

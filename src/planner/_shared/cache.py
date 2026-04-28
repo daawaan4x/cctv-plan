@@ -17,34 +17,86 @@ ARTIFACT_SCHEMA_VERSION = 1
 
 
 # Cache key derivation
-def build_config_fingerprint(floorplan: FloorPlanInput, config: PlannerConfig) -> str:
-    """Hash the floor-plan identity and planner config into a short cache key."""
+def build_shared_config_fingerprint(
+    floorplan: FloorPlanInput,
+    config: PlannerConfig,
+) -> str:
+    """Hash the shared floor-plan and non-`K` planner inputs into one cache key."""
 
-    # The fingerprint deliberately includes both the source floor-plan identity and
-    # every planner-facing config field so cached artifacts remain invalidated when
-    # either the geometry inputs or the locked scoring/orientation settings change.
+    # The shared fingerprint intentionally excludes the public `k_values` batch tuple
+    # so phase 01 through phase 04 precompute artifacts remain reusable when only the
+    # requested solve batch changes.
     payload = {
         "schema_version": ARTIFACT_SCHEMA_VERSION,
         "floorplan_name": floorplan.name,
         "grid_shape": list(floorplan.shape),
         "grid_cell_size_m": floorplan.grid_cell_size_m,
-        "config": config.as_dict(),
+        "config": config.as_shared_cache_dict(),
     }
     serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()[:12]
 
 
+def build_solution_fingerprint(
+    floorplan: FloorPlanInput,
+    config: PlannerConfig,
+    *,
+    k: int,
+) -> str:
+    """Hash one scalar `k` on top of the shared artifact payload."""
+
+    payload = {
+        "schema_version": ARTIFACT_SCHEMA_VERSION,
+        "floorplan_name": floorplan.name,
+        "grid_shape": list(floorplan.shape),
+        "grid_cell_size_m": floorplan.grid_cell_size_m,
+        "config": config.as_solution_cache_dict(k),
+    }
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()[:12]
+
+
+def build_config_fingerprint(floorplan: FloorPlanInput, config: PlannerConfig) -> str:
+    """Backward-compatible alias for the shared artifact fingerprint."""
+
+    return build_shared_config_fingerprint(floorplan, config)
+
+
 # Cache directory helpers
+def get_shared_artifact_dir(
+    floorplan: FloorPlanInput,
+    config: PlannerConfig,
+    *,
+    repo_root: Path,
+) -> Path:
+    """Return the deterministic shared artifact directory for one workspace."""
+
+    fingerprint = build_shared_config_fingerprint(floorplan, config)
+    return repo_root / config.artifact_cache_root / floorplan.name / fingerprint
+
+
 def get_artifact_dir(
     floorplan: FloorPlanInput,
     config: PlannerConfig,
     *,
     repo_root: Path,
 ) -> Path:
-    """Return the deterministic artifact directory for one floorplan/config pair."""
+    """Backward-compatible alias for the shared artifact directory."""
 
-    fingerprint = build_config_fingerprint(floorplan, config)
-    return repo_root / config.artifact_cache_root / floorplan.name / fingerprint
+    return get_shared_artifact_dir(floorplan, config, repo_root=repo_root)
+
+
+def ensure_shared_artifact_dir(
+    floorplan: FloorPlanInput,
+    config: PlannerConfig,
+    *,
+    repo_root: Path,
+) -> Path:
+    """Create the deterministic shared artifact directory when it is missing."""
+
+    artifact_dir = get_shared_artifact_dir(floorplan, config, repo_root=repo_root)
+    artifact_dir.mkdir(parents=True, exist_ok=True)
+    return artifact_dir
 
 
 def ensure_artifact_dir(
@@ -53,11 +105,9 @@ def ensure_artifact_dir(
     *,
     repo_root: Path,
 ) -> Path:
-    """Create the deterministic artifact directory when it does not yet exist."""
+    """Backward-compatible alias for the shared artifact directory creator."""
 
-    artifact_dir = get_artifact_dir(floorplan, config, repo_root=repo_root)
-    artifact_dir.mkdir(parents=True, exist_ok=True)
-    return artifact_dir
+    return ensure_shared_artifact_dir(floorplan, config, repo_root=repo_root)
 
 
 # Manifest construction
@@ -69,7 +119,7 @@ def build_artifact_manifest(
 ) -> dict[str, Any]:
     """Build the manifest payload describing one cached planner workspace."""
 
-    artifact_dir = get_artifact_dir(floorplan, config, repo_root=repo_root)
+    artifact_dir = get_shared_artifact_dir(floorplan, config, repo_root=repo_root)
     return {
         "schema_version": ARTIFACT_SCHEMA_VERSION,
         "artifact_dir": str(artifact_dir.relative_to(repo_root)),
@@ -82,8 +132,13 @@ def build_artifact_manifest(
             "solid_cell_count": floorplan.solid_cell_count,
             "grid_cell_size_m": floorplan.grid_cell_size_m,
         },
-        "config": config.as_dict(),
-        "fingerprint": build_config_fingerprint(floorplan, config),
+        "batch_request": config.as_batch_request_dict(),
+        "shared_config": config.as_shared_cache_dict(),
+        "shared_fingerprint": build_shared_config_fingerprint(floorplan, config),
+        "solution_fingerprints": {
+            str(k): build_solution_fingerprint(floorplan, config, k=k)
+            for k in config.k_values
+        },
     }
 
 
@@ -115,7 +170,7 @@ def write_manifest(
 ) -> Path:
     """Persist the standard artifact manifest into the workspace cache directory."""
 
-    artifact_dir = ensure_artifact_dir(floorplan, config, repo_root=repo_root)
+    artifact_dir = ensure_shared_artifact_dir(floorplan, config, repo_root=repo_root)
     manifest = build_artifact_manifest(floorplan, config, repo_root=repo_root)
     return write_json(artifact_dir / "manifest.json", manifest)
 
@@ -124,8 +179,12 @@ __all__ = [
     "ARTIFACT_SCHEMA_VERSION",
     "build_artifact_manifest",
     "build_config_fingerprint",
+    "build_shared_config_fingerprint",
+    "build_solution_fingerprint",
     "ensure_artifact_dir",
+    "ensure_shared_artifact_dir",
     "get_artifact_dir",
+    "get_shared_artifact_dir",
     "write_json",
     "write_manifest",
     "write_npz",
