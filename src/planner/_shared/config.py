@@ -29,9 +29,26 @@ class PlannerConfig:
     floorplan_name: str = "ground-back"
     camera_horizontal_resolution_px: int = 1920
     camera_horizontal_fov_deg: float = 90.0
-    orientation_step_deg: int = 15
-    candidate_min_spacing_cells: int = 3
-    k_values: tuple[int, ...] = (10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)
+    orientation_step_deg: int = 45
+    candidate_spacing_cells: int = 10
+    k_values: tuple[int, ...] = (
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+    )
     artifact_cache_root: str = "artifacts/planner"
     dori_thresholds: DoriThresholds = field(default_factory=DoriThresholds)
 
@@ -48,8 +65,8 @@ class PlannerConfig:
             raise ValueError("camera_horizontal_fov_deg must be between 0 and 360.")
         if self.orientation_step_deg <= 0 or 360 % self.orientation_step_deg != 0:
             raise ValueError("orientation_step_deg must be a positive divisor of 360.")
-        if self.candidate_min_spacing_cells < 1:
-            raise ValueError("candidate_min_spacing_cells must be at least 1.")
+        if self.candidate_spacing_cells < 1:
+            raise ValueError("candidate_spacing_cells must be at least 1.")
         if not self.k_values:
             raise ValueError("k_values must not be empty.")
         if any(k <= 0 for k in self.k_values):
@@ -69,7 +86,7 @@ class PlannerConfig:
             "camera_horizontal_fov_deg": self.camera_horizontal_fov_deg,
             "orientation_step_deg": self.orientation_step_deg,
             "orientation_angles_deg": list(self.orientation_angles_deg),
-            "candidate_min_spacing_cells": self.candidate_min_spacing_cells,
+            "candidate_spacing_cells": self.candidate_spacing_cells,
             "dori_thresholds": self.dori_thresholds.as_dict(),
         }
 

@@ -154,7 +154,9 @@ def validate_candidate_generation_artifacts(
     grid_size = height * width
 
     if artifacts.grid_shape != floorplan.shape:
-        raise ValueError("Candidate-generation grid_shape does not match floorplan.shape.")
+        raise ValueError(
+            "Candidate-generation grid_shape does not match floorplan.shape."
+        )
 
     _validate_flat_index_array(
         "open_cell_indices",
@@ -203,7 +205,9 @@ def validate_candidate_generation_artifacts(
     )
 
     if len(artifacts.open_cell_indices) != floorplan.open_cell_count:
-        raise ValueError("open_cell_indices length does not match floorplan.open_cell_count.")
+        raise ValueError(
+            "open_cell_indices length does not match floorplan.open_cell_count."
+        )
 
     expected_open_coords = _flat_indices_to_coords(artifacts.open_cell_indices, width)
     expected_eligible_coords = _flat_indices_to_coords(
@@ -224,8 +228,12 @@ def validate_candidate_generation_artifacts(
             "eligible_candidate_cell_coords_rc does not match "
             "eligible_candidate_cell_indices."
         )
-    if not np.array_equal(artifacts.candidate_cell_coords_rc, expected_candidate_coords):
-        raise ValueError("candidate_cell_coords_rc does not match candidate_cell_indices.")
+    if not np.array_equal(
+        artifacts.candidate_cell_coords_rc, expected_candidate_coords
+    ):
+        raise ValueError(
+            "candidate_cell_coords_rc does not match candidate_cell_indices."
+        )
 
     if not np.isin(
         artifacts.eligible_candidate_cell_indices,
@@ -532,11 +540,7 @@ def _thin_candidate_set(
     selected_candidate_flats: set[int] = set()
 
     wall_runs = _build_wall_runs(floorplan.shape[1], directional_masks)
-    wall_run_member_flats = {
-        int(flat_index)
-        for run in wall_runs
-        for flat_index in run
-    }
+    wall_run_member_flats = {int(flat_index) for run in wall_runs for flat_index in run}
 
     for run in wall_runs:
         run_anchor_positions = _build_run_anchor_positions(
@@ -552,7 +556,7 @@ def _thin_candidate_set(
                     _build_segment_candidate_positions(
                         0,
                         run_anchor_positions[0] - 1,
-                        config.candidate_min_spacing_cells,
+                        config.candidate_spacing_cells,
                     )
                 )
             for left_anchor, right_anchor in zip(
@@ -560,10 +564,10 @@ def _thin_candidate_set(
                 run_anchor_positions[1:],
             ):
                 run_selected_positions.update(
-                    _build_segment_candidate_positions(
-                        left_anchor + 1,
-                        right_anchor - 1,
-                        config.candidate_min_spacing_cells,
+                    _build_anchor_gap_candidate_positions(
+                        left_anchor,
+                        right_anchor,
+                        config.candidate_spacing_cells,
                     )
                 )
             if run_anchor_positions[-1] < len(run) - 1:
@@ -571,7 +575,7 @@ def _thin_candidate_set(
                     _build_segment_candidate_positions(
                         run_anchor_positions[-1] + 1,
                         len(run) - 1,
-                        config.candidate_min_spacing_cells,
+                        config.candidate_spacing_cells,
                     )
                 )
         else:
@@ -579,7 +583,7 @@ def _thin_candidate_set(
                 _build_segment_candidate_positions(
                     0,
                     len(run) - 1,
-                    config.candidate_min_spacing_cells,
+                    config.candidate_spacing_cells,
                 )
             )
 
@@ -599,11 +603,17 @@ def _thin_candidate_set(
         dtype=np.int32,
     )
     candidate_boundary_flags = np.asarray(
-        [eligible_boundary_lookup[int(flat_index)] for flat_index in candidate_cell_indices],
+        [
+            eligible_boundary_lookup[int(flat_index)]
+            for flat_index in candidate_cell_indices
+        ],
         dtype=np.uint8,
     )
     candidate_exception_flags = np.asarray(
-        [exception_flags_by_flat.get(int(flat_index), 0) for flat_index in candidate_cell_indices],
+        [
+            exception_flags_by_flat.get(int(flat_index), 0)
+            for flat_index in candidate_cell_indices
+        ],
         dtype=np.uint8,
     )
     return candidate_cell_indices, candidate_boundary_flags, candidate_exception_flags
@@ -616,10 +626,18 @@ def _build_wall_runs(
     """Build deterministic solid-wall runs in row-major or axis-major order."""
 
     return (
-        _collect_horizontal_runs(directional_masks.open_mask & directional_masks.north_solid, width)
-        + _collect_horizontal_runs(directional_masks.open_mask & directional_masks.south_solid, width)
-        + _collect_vertical_runs(directional_masks.open_mask & directional_masks.east_solid, width)
-        + _collect_vertical_runs(directional_masks.open_mask & directional_masks.west_solid, width)
+        _collect_horizontal_runs(
+            directional_masks.open_mask & directional_masks.north_solid, width
+        )
+        + _collect_horizontal_runs(
+            directional_masks.open_mask & directional_masks.south_solid, width
+        )
+        + _collect_vertical_runs(
+            directional_masks.open_mask & directional_masks.east_solid, width
+        )
+        + _collect_vertical_runs(
+            directional_masks.open_mask & directional_masks.west_solid, width
+        )
     )
 
 
@@ -684,38 +702,42 @@ def _build_run_anchor_positions(
     # booleans through `PlannerConfig`.
     anchor_positions.add(0)
     anchor_positions.add(run_length - 1)
-    exception_flags_by_flat[int(run[0])] = (
-        exception_flags_by_flat.get(int(run[0]), 0) | int(_EXCEPTION_FLAG_ENDPOINT)
-    )
-    exception_flags_by_flat[int(run[-1])] = (
-        exception_flags_by_flat.get(int(run[-1]), 0) | int(_EXCEPTION_FLAG_ENDPOINT)
-    )
+    exception_flags_by_flat[int(run[0])] = exception_flags_by_flat.get(
+        int(run[0]), 0
+    ) | int(_EXCEPTION_FLAG_ENDPOINT)
+    exception_flags_by_flat[int(run[-1])] = exception_flags_by_flat.get(
+        int(run[-1]), 0
+    ) | int(_EXCEPTION_FLAG_ENDPOINT)
 
     midpoint_position = (run_length - 1) // 2
     anchor_positions.add(midpoint_position)
     midpoint_flat = int(run[midpoint_position])
-    exception_flags_by_flat[midpoint_flat] = (
-        exception_flags_by_flat.get(midpoint_flat, 0) | int(_EXCEPTION_FLAG_MIDPOINT)
-    )
+    exception_flags_by_flat[midpoint_flat] = exception_flags_by_flat.get(
+        midpoint_flat, 0
+    ) | int(_EXCEPTION_FLAG_MIDPOINT)
 
     for position, flat_index in enumerate(run):
         flat_value = int(flat_index)
         solid_flags = eligible_solid_lookup.get(flat_value, 0)
         solid_dir_count = _count_direction_bits(solid_flags)
-        has_vertical_solid = (solid_flags & int(_BOUNDARY_FLAG_NORTH | _BOUNDARY_FLAG_SOUTH)) != 0
-        has_horizontal_solid = (solid_flags & int(_BOUNDARY_FLAG_EAST | _BOUNDARY_FLAG_WEST)) != 0
+        has_vertical_solid = (
+            solid_flags & int(_BOUNDARY_FLAG_NORTH | _BOUNDARY_FLAG_SOUTH)
+        ) != 0
+        has_horizontal_solid = (
+            solid_flags & int(_BOUNDARY_FLAG_EAST | _BOUNDARY_FLAG_WEST)
+        ) != 0
 
         if solid_dir_count == 2 and has_vertical_solid and has_horizontal_solid:
             anchor_positions.add(position)
-            exception_flags_by_flat[flat_value] = (
-                exception_flags_by_flat.get(flat_value, 0) | int(_EXCEPTION_FLAG_CORNER)
-            )
+            exception_flags_by_flat[flat_value] = exception_flags_by_flat.get(
+                flat_value, 0
+            ) | int(_EXCEPTION_FLAG_CORNER)
 
         if solid_dir_count >= 3:
             anchor_positions.add(position)
-            exception_flags_by_flat[flat_value] = (
-                exception_flags_by_flat.get(flat_value, 0) | int(_EXCEPTION_FLAG_JUNCTION)
-            )
+            exception_flags_by_flat[flat_value] = exception_flags_by_flat.get(
+                flat_value, 0
+            ) | int(_EXCEPTION_FLAG_JUNCTION)
 
     return sorted(anchor_positions)
 
@@ -755,10 +777,67 @@ def _build_segment_candidate_positions(
     required_span = spacing * (candidate_count - 1)
     slack = (length - 1) - required_span
     positions = {
-        start + (position_ordinal * spacing) + ((position_ordinal * slack) // (candidate_count - 1))
+        start
+        + (position_ordinal * spacing)
+        + ((position_ordinal * slack) // (candidate_count - 1))
         for position_ordinal in range(candidate_count)
     }
     return positions
+
+
+def _build_anchor_gap_candidate_positions(
+    left_anchor: int,
+    right_anchor: int,
+    spacing: int,
+) -> set[int]:
+    """Distribute interior candidates across one anchor-bounded wall-run gap.
+
+    The current thinning rule allows sub-minimum gaps only when one neighbor is
+    an exception anchor. To avoid filling a gap by snapping candidates directly
+    onto the cells beside both anchors, derive the interior count from the full
+    anchor span first, then repair the rounded positions so every
+    non-exception-to-non-exception gap still respects `spacing`.
+    """
+
+    interior_start = left_anchor + 1
+    interior_end = right_anchor - 1
+    if interior_start > interior_end:
+        return set()
+
+    interior_length = (interior_end - interior_start) + 1
+    candidate_count = interior_length // spacing
+    if candidate_count <= 0:
+        return set()
+
+    full_span = right_anchor - left_anchor
+    positions = [
+        int(np.floor(left_anchor + ((ordinal + 1) * full_span / (candidate_count + 1))))
+        for ordinal in range(candidate_count)
+    ]
+
+    min_positions = [
+        interior_start + (ordinal * spacing) for ordinal in range(candidate_count)
+    ]
+    max_positions = [
+        interior_end - ((candidate_count - ordinal - 1) * spacing)
+        for ordinal in range(candidate_count)
+    ]
+
+    for ordinal in range(candidate_count):
+        positions[ordinal] = max(positions[ordinal], min_positions[ordinal])
+        if ordinal > 0:
+            positions[ordinal] = max(
+                positions[ordinal], positions[ordinal - 1] + spacing
+            )
+
+    for ordinal in range(candidate_count - 1, -1, -1):
+        positions[ordinal] = min(positions[ordinal], max_positions[ordinal])
+        if ordinal < candidate_count - 1:
+            positions[ordinal] = min(
+                positions[ordinal], positions[ordinal + 1] - spacing
+            )
+
+    return set(positions)
 
 
 def _flat_indices_to_coords(
@@ -847,7 +926,9 @@ def _validate_candidate_cells_match_grid(
         strict=True,
     ):
         if grid[row, col] != OPEN_CELL:
-            raise ValueError("candidate coordinate array includes a non-open grid cell.")
+            raise ValueError(
+                "candidate coordinate array includes a non-open grid cell."
+            )
         if boundary_flag == 0:
             raise ValueError("candidate boundary-flag arrays must be non-zero.")
 
@@ -922,7 +1003,7 @@ def _validate_candidate_spacing_rules(
             selected_positions,
             selected_positions[1:],
         ):
-            if (right_position - left_position) >= config.candidate_min_spacing_cells:
+            if (right_position - left_position) >= config.candidate_spacing_cells:
                 continue
 
             left_exception_flag = selected_lookup[int(run[left_position])]

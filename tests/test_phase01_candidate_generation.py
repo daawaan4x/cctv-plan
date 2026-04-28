@@ -47,6 +47,29 @@ def _build_floorplan() -> FloorPlanInput:
     )
 
 
+def _build_long_wall_run_floorplan() -> FloorPlanInput:
+    """Build one long solid-adjacent run to exercise anchor-gap spacing."""
+
+    grid = np.array(
+        [
+            [SOLID_CELL] * 15,
+            [OPEN_CELL] * 15,
+            [NULL_CELL] * 15,
+        ],
+        dtype=np.int8,
+    )
+    return FloorPlanInput(
+        name="phase01-long-run",
+        source_path=Path("phase01-long-run.png"),
+        grid=grid,
+        height=3,
+        width=15,
+        null_cell_count=15,
+        open_cell_count=15,
+        solid_cell_count=15,
+    )
+
+
 class CandidateGenerationTests(unittest.TestCase):
     """Verify the stored phase-01 artifacts against the locked candidate rules."""
 
@@ -73,8 +96,12 @@ class CandidateGenerationTests(unittest.TestCase):
         expected_exception_flags = np.array([0, 3, 3, 3, 3, 0], dtype=np.uint8)
 
         self.assertEqual(artifacts.grid_shape, (5, 5))
-        np.testing.assert_array_equal(artifacts.open_cell_indices, expected_open_indices)
-        np.testing.assert_array_equal(artifacts.open_cell_coords_rc, expected_open_coords)
+        np.testing.assert_array_equal(
+            artifacts.open_cell_indices, expected_open_indices
+        )
+        np.testing.assert_array_equal(
+            artifacts.open_cell_coords_rc, expected_open_coords
+        )
         np.testing.assert_array_equal(
             artifacts.eligible_candidate_cell_indices,
             expected_eligible_indices,
@@ -182,7 +209,9 @@ class CandidateGenerationTests(unittest.TestCase):
         ):
             validate_candidate_generation_artifacts(floorplan, broken, config=config)
 
-    def test_resolve_candidate_generation_artifacts_ignores_public_k_values_tuple(self) -> None:
+    def test_resolve_candidate_generation_artifacts_ignores_public_k_values_tuple(
+        self,
+    ) -> None:
         floorplan = _build_floorplan()
         config_left = PlannerConfig(floorplan_name=floorplan.name, k_values=(1, 2))
         config_right = PlannerConfig(floorplan_name=floorplan.name, k_values=(5, 6, 7))
@@ -203,7 +232,35 @@ class CandidateGenerationTests(unittest.TestCase):
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-        np.testing.assert_array_equal(left.candidate_cell_indices, right.candidate_cell_indices)
+        np.testing.assert_array_equal(
+            left.candidate_cell_indices, right.candidate_cell_indices
+        )
+
+    def test_generate_candidate_generation_artifacts_avoids_anchor_adjacent_fill_in_corner_to_midpoint_gap(
+        self,
+    ) -> None:
+        floorplan = _build_long_wall_run_floorplan()
+        config = PlannerConfig(
+            floorplan_name=floorplan.name,
+            candidate_spacing_cells=5,
+        )
+
+        artifacts = generate_candidate_generation_artifacts(floorplan, config)
+        candidate_columns = artifacts.candidate_cell_coords_rc[:, 1].tolist()
+
+        self.assertIn(0, candidate_columns)
+        self.assertIn(7, candidate_columns)
+        self.assertIn(14, candidate_columns)
+
+        left_gap_positions = [
+            position for position in candidate_columns if 0 < position < 7
+        ]
+        right_gap_positions = [
+            position for position in candidate_columns if 7 < position < 14
+        ]
+
+        self.assertEqual(left_gap_positions, [3])
+        self.assertEqual(right_gap_positions, [10])
 
 
 if __name__ == "__main__":
