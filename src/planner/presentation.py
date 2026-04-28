@@ -359,6 +359,7 @@ def plot_metric_by_k(
     ax: Axes | None = None,
     title: str | None = None,
     ylabel: str | None = None,
+    ybound: tuple[float | None, float | None] | None = None,
 ) -> Axes:
     """Plot one metric against the absolute camera budget for each floor plan."""
 
@@ -380,6 +381,9 @@ def plot_metric_by_k(
             label=result.floorplan.name,
         )
 
+    if ybound is not None:
+        lower, upper = ybound
+        plot_axis.set_ybound(lower, upper)
     plot_axis.set_title(title or metric_key.replace("_", " ").title())
     plot_axis.set_xlabel("Absolute camera budget K")
     plot_axis.set_ylabel(ylabel or metric_key.replace("_", " ").title())
@@ -440,6 +444,7 @@ def plot_metric_by_delta_k(
     ax: Axes | None = None,
     title: str | None = None,
     ylabel: str | None = None,
+    ybound: tuple[float | None, float | None] | None = None,
 ) -> Axes:
     """Plot one metric against the aligned relative camera budget `delta_k`."""
 
@@ -469,6 +474,9 @@ def plot_metric_by_delta_k(
             label=f"{floorplan_name} (min K={require_floorplan_min_k(result.floorplan)})",
         )
 
+    if ybound is not None:
+        lower, upper = ybound
+        plot_axis.set_ybound(lower, upper)
     plot_axis.set_title(title or metric_key.replace("_", " ").title())
     plot_axis.set_xlabel("Relative budget delta_k = K - min_k")
     plot_axis.set_ylabel(ylabel or metric_key.replace("_", " ").title())
