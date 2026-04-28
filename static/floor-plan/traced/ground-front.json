@@ -1,3 +1,4 @@
 {
-  "grid_cell_size_m": 0.34653822
+  "grid_cell_size_m": 0.34653822,
+  "min_k": 13
 }

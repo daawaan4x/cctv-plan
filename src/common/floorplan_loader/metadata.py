@@ -17,6 +17,7 @@ class TracedFloorPlanMetadata:
     source_path: Path
     metadata_path: Path
     grid_cell_size_m: float | None
+    min_k: int | None
 
 
 def get_traced_floorplan_metadata_path(source_path: PathLikeStr) -> Path:
@@ -79,10 +80,27 @@ def load_traced_floorplan_metadata(source_path: PathLikeStr) -> TracedFloorPlanM
                 f"provided: {metadata_path}"
             )
 
+    raw_min_k = payload.get("min_k")
+    if raw_min_k is None:
+        min_k = None
+    elif isinstance(raw_min_k, bool) or not isinstance(raw_min_k, int):
+        raise ValueError(
+            "Traced floor-plan metadata 'min_k' must be a positive integer or null: "
+            f"{metadata_path}"
+        )
+    else:
+        min_k = int(raw_min_k)
+        if min_k <= 0:
+            raise ValueError(
+                "Traced floor-plan metadata 'min_k' must be positive when provided: "
+                f"{metadata_path}"
+            )
+
     return TracedFloorPlanMetadata(
         source_path=source_path_resolved,
         metadata_path=metadata_path,
         grid_cell_size_m=grid_cell_size_m,
+        min_k=min_k,
     )
 
 

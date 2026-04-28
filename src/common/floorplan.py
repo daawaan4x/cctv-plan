@@ -38,6 +38,7 @@ class FloorPlanInput:
     open_cell_count: int
     solid_cell_count: int
     grid_cell_size_m: float | None = None
+    min_k: int | None = None
 
     def __post_init__(self) -> None:
         """Enforce the locked tri-state grid shape and count invariants."""
@@ -59,6 +60,8 @@ class FloorPlanInput:
             raise ValueError("FloorPlanInput cell counts must sum to the grid size.")
         if self.grid_cell_size_m is not None and self.grid_cell_size_m <= 0:
             raise ValueError("FloorPlanInput.grid_cell_size_m must be positive when set.")
+        if self.min_k is not None and self.min_k <= 0:
+            raise ValueError("FloorPlanInput.min_k must be positive when set.")
 
     @property
     def shape(self) -> tuple[int, int]:

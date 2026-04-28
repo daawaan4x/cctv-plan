@@ -36,6 +36,7 @@ def load_traced_floorplan(path: PathLikeStr) -> FloorPlanInput:
         open_cell_count=open_cell_count,
         solid_cell_count=solid_cell_count,
         grid_cell_size_m=metadata.grid_cell_size_m,
+        min_k=metadata.min_k,
     )
 
 

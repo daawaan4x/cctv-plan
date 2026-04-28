@@ -67,12 +67,22 @@ def _write_rgba_png(path: Path, rgba: np.ndarray) -> None:
     path.write_bytes(png_bytes)
 
 
-def _write_floorplan_metadata(path: Path, *, grid_cell_size_m: float | None) -> None:
+def _write_floorplan_metadata(
+    path: Path,
+    *,
+    grid_cell_size_m: float | None,
+    min_k: int | None = None,
+) -> None:
     """Write the sibling JSON metadata file expected by the traced loader."""
 
     metadata_path = path.with_suffix(".json")
+    metadata_payload: dict[str, float | int | None] = {
+        "grid_cell_size_m": grid_cell_size_m,
+    }
+    if min_k is not None:
+        metadata_payload["min_k"] = min_k
     metadata_path.write_text(
-        json.dumps({"grid_cell_size_m": grid_cell_size_m}, indent=2) + "\n",
+        json.dumps(metadata_payload, indent=2) + "\n",
         encoding="utf-8",
     )
 
@@ -108,7 +118,7 @@ class FloorPlanLoaderTests(unittest.TestCase):
                 dtype=np.uint8,
             )
             _write_rgba_png(image_path, rgba)
-            _write_floorplan_metadata(image_path, grid_cell_size_m=0.5)
+            _write_floorplan_metadata(image_path, grid_cell_size_m=0.5, min_k=3)
             floorplan = load_traced_floorplan(image_path)
 
         expected_grid = np.array(
@@ -124,6 +134,7 @@ class FloorPlanLoaderTests(unittest.TestCase):
         self.assertEqual(floorplan.open_cell_count, 2)
         self.assertEqual(floorplan.solid_cell_count, 1)
         self.assertEqual(floorplan.grid_cell_size_m, 0.5)
+        self.assertEqual(floorplan.min_k, 3)
         np.testing.assert_array_equal(
             floorplan.open_mask,
             np.array([[False, True], [False, True]]),
@@ -199,7 +210,8 @@ class FloorPlanLoaderTests(unittest.TestCase):
             + floorplan.solid_cell_count,
             floorplan.height * floorplan.width,
         )
-        self.assertIsNone(floorplan.grid_cell_size_m)
+        self.assertAlmostEqual(float(floorplan.grid_cell_size_m or 0.0), 0.34653822)
+        self.assertEqual(floorplan.min_k, 14)
 
     def test_load_traced_floorplan_requires_sibling_metadata_json(self) -> None:
         with _workspace_temp_dir() as temp_dir:
@@ -226,6 +238,49 @@ class FloorPlanLoaderTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 ValueError,
                 r"grid_cell_size_m' must be a positive number or null",
+            ):
+                load_traced_floorplan(image_path)
+
+    def test_load_traced_floorplan_accepts_missing_min_k(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "missing-min-k.png"
+            rgba = np.array([[[255, 255, 255, 255]]], dtype=np.uint8)
+            _write_rgba_png(image_path, rgba)
+            _write_floorplan_metadata(image_path, grid_cell_size_m=0.5)
+
+            floorplan = load_traced_floorplan(image_path)
+
+        self.assertIsNone(floorplan.min_k)
+
+    def test_load_traced_floorplan_rejects_non_integer_min_k(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "invalid-min-k-type.png"
+            rgba = np.array([[[255, 255, 255, 255]]], dtype=np.uint8)
+            _write_rgba_png(image_path, rgba)
+            image_path.with_suffix(".json").write_text(
+                json.dumps({"grid_cell_size_m": 0.5, "min_k": "ten"}) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ValueError,
+                r"'min_k' must be a positive integer or null",
+            ):
+                load_traced_floorplan(image_path)
+
+    def test_load_traced_floorplan_rejects_non_positive_min_k(self) -> None:
+        with _workspace_temp_dir() as temp_dir:
+            image_path = temp_dir / "invalid-min-k-value.png"
+            rgba = np.array([[[255, 255, 255, 255]]], dtype=np.uint8)
+            _write_rgba_png(image_path, rgba)
+            image_path.with_suffix(".json").write_text(
+                json.dumps({"grid_cell_size_m": 0.5, "min_k": 0}) + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(
+                ValueError,
+                r"'min_k' must be positive when provided",
             ):
                 load_traced_floorplan(image_path)
 
