@@ -1,7 +1,41 @@
-from .core import CoverageMetrics, PHASE_ARTIFACT_STEM, PHASE_NAME
+from .core import (
+    CoverageMetrics,
+    PHASE_ARTIFACT_STEM,
+    PHASE_NAME,
+    VisualizationArtifacts,
+    build_visualization_artifacts,
+    compute_coverage_metrics,
+    ensure_visualization_artifacts,
+    load_visualization_artifacts,
+    resolve_visualization_artifact,
+    resolve_visualization_artifacts_for_k_values,
+    save_visualization_artifacts,
+    save_visualization_summary,
+    validate_visualization_artifacts,
+)
+from .plotting import (
+    plot_blind_spot_map,
+    plot_dori_map,
+    plot_metric_summary_table,
+    plot_selected_configurations,
+)
 
 __all__ = [
     "CoverageMetrics",
     "PHASE_ARTIFACT_STEM",
     "PHASE_NAME",
+    "VisualizationArtifacts",
+    "build_visualization_artifacts",
+    "compute_coverage_metrics",
+    "ensure_visualization_artifacts",
+    "load_visualization_artifacts",
+    "plot_blind_spot_map",
+    "plot_dori_map",
+    "plot_metric_summary_table",
+    "plot_selected_configurations",
+    "resolve_visualization_artifact",
+    "resolve_visualization_artifacts_for_k_values",
+    "save_visualization_artifacts",
+    "save_visualization_summary",
+    "validate_visualization_artifacts",
 ]

@@ -34,6 +34,44 @@ uv run ruff check .
 uv run pyright src tests
 ```
 
+### Run the end-to-end planner
+
+One floor plan, first 3 configured `k` values:
+
+```powershell
+uv run python -m src.planner.runner --floorplan ground-back --first-k-values 3
+```
+
+One floor plan, all configured `k` values:
+
+```powershell
+uv run python -m src.planner.runner --floorplan ground-back --all-k-values
+```
+
+All floor plans, first 2 configured `k` values:
+
+```powershell
+uv run python -m src.planner.runner --all-floorplans --first-k-values 2
+```
+
+All floor plans, first 2 configured `k` values, with explicit parallel worker count:
+
+```powershell
+uv run python -m src.planner.runner --all-floorplans --first-k-values 2 --workers 4
+```
+
+All floor plans, all configured `k` values, forcing fresh recomputation:
+
+```powershell
+uv run python -m src.planner.runner --all-floorplans --all-k-values --force
+```
+
+One floor plan, explicit `k` values, with a JSONL completion log:
+
+```powershell
+uv run python -m src.planner.runner --floorplan second-front --k-values 10 12 14 --status-log artifacts/planner/run-status.jsonl
+```
+
 ## Notes
 
 - The optimization input is a tri-state occupancy grid:
