@@ -1,0 +1,25 @@
+{
+  "blind_spot_pct": 0.2778784583786396,
+  "coverage_detection_plus_pct": 99.72212154162136,
+  "coverage_identification_pct": 27.352905642140872,
+  "coverage_observation_plus_pct": 99.58922314848375,
+  "coverage_recognition_plus_pct": 78.92956385163707,
+  "dori_score_histogram": {
+    "0": 23,
+    "1": 11,
+    "2": 1710,
+    "3": 4269,
+    "4": 2264
+  },
+  "grid_shape": [
+    90,
+    210
+  ],
+  "open_cell_count": 8277,
+  "phase_name": "visualization",
+  "selected_camera_count": 22,
+  "solved_k": 22,
+  "solver_name": "HiGHS",
+  "solver_status": "Optimal",
+  "total_dori_score": 25294.0
+}

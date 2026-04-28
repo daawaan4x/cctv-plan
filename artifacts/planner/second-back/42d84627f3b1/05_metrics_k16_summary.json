@@ -1,0 +1,25 @@
+{
+  "blind_spot_pct": 4.788011695906433,
+  "coverage_detection_plus_pct": 95.21198830409357,
+  "coverage_identification_pct": 20.626218323586745,
+  "coverage_observation_plus_pct": 83.46734892787525,
+  "coverage_recognition_plus_pct": 63.55994152046784,
+  "dori_score_histogram": {
+    "0": 393,
+    "1": 964,
+    "2": 1634,
+    "3": 3524,
+    "4": 1693
+  },
+  "grid_shape": [
+    90,
+    210
+  ],
+  "open_cell_count": 8208,
+  "phase_name": "visualization",
+  "selected_camera_count": 16,
+  "solved_k": 16,
+  "solver_name": "PULP_CBC_CMD",
+  "solver_status": "Optimal",
+  "total_dori_score": 21576.0
+}
