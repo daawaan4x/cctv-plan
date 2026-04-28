@@ -1921,13 +1921,32 @@ def _prepare_solver_for_run(
 
 
 def _build_default_solver() -> pulp.LpSolver:
-    """Build the default open-source solver for the pinned PuLP 3.x workspace."""
+    """Build the preferred default solver, falling back cleanly across backends."""
 
-    if hasattr(pulp, "PULP_CBC_CMD"):
-        return pulp.PULP_CBC_CMD(msg=False)
-    if hasattr(pulp, "COIN_CMD"):
-        return pulp.COIN_CMD(msg=False)
-    raise RuntimeError("No supported default PuLP CBC solver interface is available.")
+    # Prefer the native HiGHS Python API when the workspace has `highspy`
+    # installed because that is the backend this repo now targets by default.
+    for solver_factory in (
+        lambda: pulp.HiGHS(msg=False),
+        lambda: pulp.HiGHS_CMD(msg=False),
+        lambda: pulp.PULP_CBC_CMD(msg=False),
+        lambda: pulp.COIN_CMD(msg=False),
+    ):
+        try:
+            solver = solver_factory()
+        except AttributeError:
+            continue
+
+        try:
+            available = solver.available() if hasattr(solver, "available") else True
+        except Exception:
+            continue
+
+        if available:
+            return solver
+
+    raise RuntimeError(
+        "No supported default PuLP solver interface is available for phase 04."
+    )
 
 
 def _get_solver_name(solver: pulp.LpSolver) -> str:
