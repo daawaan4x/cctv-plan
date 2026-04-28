@@ -4,7 +4,7 @@
   "coverage_identification_pct": 27.352905642140872,
   "coverage_observation_plus_pct": 99.58922314848375,
   "coverage_recognition_plus_pct": 78.92956385163707,
-  "objective_value": 25294.000000000015,
+  "objective_value": 25293.999999999935,
   "open_cell_count": 8277,
   "phase_name": "optimization",
   "selected_camera_count": 22,

@@ -4,12 +4,12 @@
   "coverage_identification_pct": 14.220128065724296,
   "coverage_observation_plus_pct": 70.81068019813942,
   "coverage_recognition_plus_pct": 48.89452700253715,
-  "objective_value": 17890.0,
+  "objective_value": 17890.00000000046,
   "open_cell_count": 8277,
   "phase_name": "optimization",
   "selected_camera_count": 11,
   "solved_k": 11,
-  "solver_name": "PULP_CBC_CMD",
+  "solver_name": "HiGHS",
   "solver_status": "Optimal",
   "total_dori_score": 17890.0
 }

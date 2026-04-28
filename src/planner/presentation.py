@@ -347,7 +347,7 @@ def plot_candidate_set_comparison(
         final_axis,
         phase01_artifacts.candidate_cell_coords_rc,
         color="#2f9e44",
-        size=24.0,
+        size=6.0,
     )
     return eligible_axis, final_axis
 

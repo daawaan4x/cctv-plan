@@ -44,13 +44,9 @@ class CandidateGenerationArtifacts:
 
 @dataclass(frozen=True, slots=True)
 class _DirectionalMasks:
-    """Boolean directional masks reused across eligibility and wall-run logic."""
+    """Boolean directional masks reused across solid-adjacency wall-run logic."""
 
     open_mask: NDArray[np.bool_]
-    north_non_open: NDArray[np.bool_]
-    east_non_open: NDArray[np.bool_]
-    south_non_open: NDArray[np.bool_]
-    west_non_open: NDArray[np.bool_]
     north_solid: NDArray[np.bool_]
     east_solid: NDArray[np.bool_]
     south_solid: NDArray[np.bool_]
@@ -276,14 +272,14 @@ def validate_candidate_generation_artifacts(
         expected_eligible_indices,
     ):
         raise ValueError(
-            "eligible_candidate_cell_indices does not match the locked eligibility rule."
+            "eligible_candidate_cell_indices does not match the locked solid-adjacency rule."
         )
     if not np.array_equal(
         artifacts.eligible_candidate_boundary_flags,
         expected_eligible_boundary_flags,
     ):
         raise ValueError(
-            "eligible_candidate_boundary_flags does not match a re-derived non-open "
+            "eligible_candidate_boundary_flags does not match a re-derived solid "
             "boundary bitmask."
         )
 
@@ -430,11 +426,10 @@ def _build_open_cell_indices(grid: NDArray[np.int8]) -> NDArray[np.int32]:
 
 
 def _build_directional_masks(grid: NDArray[np.int8]) -> _DirectionalMasks:
-    """Build reusable directional neighbor masks for open and solid adjacency."""
+    """Build reusable directional neighbor masks for solid adjacency."""
 
     open_mask = grid == OPEN_CELL
     solid_mask = grid == SOLID_CELL
-    padded_open = np.pad(open_mask, pad_width=1, mode="constant", constant_values=False)
     padded_solid = np.pad(
         solid_mask,
         pad_width=1,
@@ -442,17 +437,8 @@ def _build_directional_masks(grid: NDArray[np.int8]) -> _DirectionalMasks:
         constant_values=False,
     )
 
-    north_open = padded_open[0:-2, 1:-1]
-    east_open = padded_open[1:-1, 2:]
-    south_open = padded_open[2:, 1:-1]
-    west_open = padded_open[1:-1, 0:-2]
-
     return _DirectionalMasks(
         open_mask=open_mask,
-        north_non_open=~north_open,
-        east_non_open=~east_open,
-        south_non_open=~south_open,
-        west_non_open=~west_open,
         north_solid=padded_solid[0:-2, 1:-1],
         east_solid=padded_solid[1:-1, 2:],
         south_solid=padded_solid[2:, 1:-1],
@@ -463,19 +449,13 @@ def _build_directional_masks(grid: NDArray[np.int8]) -> _DirectionalMasks:
 def _build_eligible_candidate_arrays(
     directional_masks: _DirectionalMasks,
 ) -> tuple[NDArray[np.int32], NDArray[np.uint8], NDArray[np.uint8]]:
-    """Return eligible candidate flat indices plus non-open and solid bitmasks."""
+    """Return eligible solid-adjacent candidate flat indices plus direction bitmasks."""
 
     eligible_mask = directional_masks.open_mask & (
-        directional_masks.north_non_open
-        | directional_masks.east_non_open
-        | directional_masks.south_non_open
-        | directional_masks.west_non_open
-    )
-    boundary_flags_full = (
-        (directional_masks.north_non_open.astype(np.uint8) * _BOUNDARY_FLAG_NORTH)
-        | (directional_masks.east_non_open.astype(np.uint8) * _BOUNDARY_FLAG_EAST)
-        | (directional_masks.south_non_open.astype(np.uint8) * _BOUNDARY_FLAG_SOUTH)
-        | (directional_masks.west_non_open.astype(np.uint8) * _BOUNDARY_FLAG_WEST)
+        directional_masks.north_solid
+        | directional_masks.east_solid
+        | directional_masks.south_solid
+        | directional_masks.west_solid
     )
     solid_flags_full = (
         (directional_masks.north_solid.astype(np.uint8) * _BOUNDARY_FLAG_NORTH)
@@ -488,7 +468,7 @@ def _build_eligible_candidate_arrays(
         np.int32,
         copy=False,
     )
-    eligible_candidate_boundary_flags = boundary_flags_full[eligible_mask].astype(
+    eligible_candidate_boundary_flags = solid_flags_full[eligible_mask].astype(
         np.uint8,
         copy=False,
     )
@@ -540,7 +520,6 @@ def _thin_candidate_set(
     selected_candidate_flats: set[int] = set()
 
     wall_runs = _build_wall_runs(floorplan.shape[1], directional_masks)
-    wall_run_member_flats = {int(flat_index) for run in wall_runs for flat_index in run}
 
     for run in wall_runs:
         run_anchor_positions = _build_run_anchor_positions(
@@ -589,14 +568,6 @@ def _thin_candidate_set(
 
         for position in run_selected_positions:
             selected_candidate_flats.add(int(run[position]))
-
-    # Candidates that are eligible only because they touch null/out-of-bounds remain
-    # valid under the locked eligibility rule, but they do not belong to any solid-wall
-    # run, so the spacing stage leaves them untouched.
-    for flat_index in eligible_candidate_cell_indices:
-        flat_value = int(flat_index)
-        if flat_value not in wall_run_member_flats:
-            selected_candidate_flats.add(flat_value)
 
     candidate_cell_indices = np.asarray(
         sorted(selected_candidate_flats),
@@ -918,7 +889,7 @@ def _validate_candidate_cells_match_grid(
     candidate_cell_coords_rc: NDArray[np.int32],
     candidate_boundary_flags: NDArray[np.uint8],
 ) -> None:
-    """Confirm that every candidate is open and satisfies the boundary rule."""
+    """Confirm that every candidate is open and satisfies the solid-adjacency rule."""
 
     for (row, col), boundary_flag in zip(
         candidate_cell_coords_rc,
@@ -932,23 +903,21 @@ def _validate_candidate_cells_match_grid(
         if boundary_flag == 0:
             raise ValueError("candidate boundary-flag arrays must be non-zero.")
 
-        has_non_open_neighbor = False
+        has_solid_neighbor = False
         for dr, dc in ((-1, 0), (0, 1), (1, 0), (0, -1)):
             neighbor_row = row + dr
             neighbor_col = col + dc
             if (
-                neighbor_row < 0
-                or neighbor_row >= grid.shape[0]
-                or neighbor_col < 0
-                or neighbor_col >= grid.shape[1]
-                or grid[neighbor_row, neighbor_col] != OPEN_CELL
+                0 <= neighbor_row < grid.shape[0]
+                and 0 <= neighbor_col < grid.shape[1]
+                and grid[neighbor_row, neighbor_col] == SOLID_CELL
             ):
-                has_non_open_neighbor = True
+                has_solid_neighbor = True
                 break
 
-        if not has_non_open_neighbor:
+        if not has_solid_neighbor:
             raise ValueError(
-                "candidate coordinate array includes an open cell with no non-open "
+                "candidate coordinate array includes an open cell with no solid "
                 "4-neighbor."
             )
 

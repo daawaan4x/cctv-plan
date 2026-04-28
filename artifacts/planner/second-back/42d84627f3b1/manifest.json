@@ -48,12 +48,12 @@
     "grid_cell_size_m": 0.34653822,
     "name": "second-back",
     "null_cell_count": 9395,
-    "open_cell_count": 8208,
+    "open_cell_count": 8224,
     "shape": [
       90,
       210
     ],
-    "solid_cell_count": 1297,
+    "solid_cell_count": 1281,
     "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\second-back.png"
   },
   "schema_version": 1,

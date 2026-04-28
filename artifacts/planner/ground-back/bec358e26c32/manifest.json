@@ -48,12 +48,12 @@
     "grid_cell_size_m": 0.34653822,
     "name": "ground-back",
     "null_cell_count": 9135,
-    "open_cell_count": 8429,
+    "open_cell_count": 8455,
     "shape": [
       90,
       210
     ],
-    "solid_cell_count": 1336,
+    "solid_cell_count": 1310,
     "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\ground-back.png"
   },
   "schema_version": 1,

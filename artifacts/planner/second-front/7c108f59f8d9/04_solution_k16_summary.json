@@ -9,7 +9,7 @@
   "phase_name": "optimization",
   "selected_camera_count": 16,
   "solved_k": 16,
-  "solver_name": "PULP_CBC_CMD",
+  "solver_name": "HiGHS",
   "solver_status": "Optimal",
   "total_dori_score": 22587.0
 }

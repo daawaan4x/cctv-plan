@@ -23,7 +23,7 @@ from src.planner.phase01_candidate_generation import (
 
 # Small tri-state fixture
 def _build_floorplan() -> FloorPlanInput:
-    """Build a small tri-state grid that exercises the candidate boundary rule."""
+    """Build a small tri-state grid that distinguishes solid from null adjacency."""
 
     grid = np.array(
         [
@@ -87,13 +87,13 @@ class CandidateGenerationTests(unittest.TestCase):
             [[1, 1], [1, 2], [2, 1], [2, 2], [2, 3], [3, 2], [3, 3]],
             dtype=np.int32,
         )
-        expected_eligible_indices = np.array([6, 7, 11, 13, 17, 18], dtype=np.int32)
+        expected_eligible_indices = np.array([7, 11, 13, 17], dtype=np.int32)
         expected_eligible_coords = np.array(
-            [[1, 1], [1, 2], [2, 1], [2, 3], [3, 2], [3, 3]],
+            [[1, 2], [2, 1], [2, 3], [3, 2]],
             dtype=np.int32,
         )
-        expected_boundary_flags = np.array([9, 3, 12, 3, 12, 6], dtype=np.uint8)
-        expected_exception_flags = np.array([0, 3, 3, 3, 3, 0], dtype=np.uint8)
+        expected_boundary_flags = np.array([2, 4, 1, 8], dtype=np.uint8)
+        expected_exception_flags = np.array([3, 3, 3, 3], dtype=np.uint8)
 
         self.assertEqual(artifacts.grid_shape, (5, 5))
         np.testing.assert_array_equal(
@@ -130,6 +130,11 @@ class CandidateGenerationTests(unittest.TestCase):
             artifacts.candidate_exception_flags,
             expected_exception_flags,
         )
+
+        # Two open cells touch only null/out-of-bounds space and must no longer be
+        # marked eligible after the solid-only candidate-rule change.
+        self.assertNotIn(6, artifacts.eligible_candidate_cell_indices.tolist())
+        self.assertNotIn(18, artifacts.eligible_candidate_cell_indices.tolist())
 
     def test_save_and_load_candidate_generation_artifacts_round_trip(self) -> None:
         floorplan = _build_floorplan()

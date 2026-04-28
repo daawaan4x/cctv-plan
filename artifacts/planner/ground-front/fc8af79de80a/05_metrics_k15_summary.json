@@ -1,15 +1,15 @@
 {
-  "blind_spot_pct": 7.134824440834687,
-  "coverage_detection_plus_pct": 92.86517555916531,
-  "coverage_identification_pct": 20.029988754217168,
-  "coverage_observation_plus_pct": 82.81894289641384,
-  "coverage_recognition_plus_pct": 60.10246157690866,
+  "blind_spot_pct": 7.159815069348994,
+  "coverage_detection_plus_pct": 92.840184930651,
+  "coverage_identification_pct": 19.9675121829314,
+  "coverage_observation_plus_pct": 82.79395226789954,
+  "coverage_recognition_plus_pct": 59.92752717730851,
   "dori_score_histogram": {
-    "0": 571,
+    "0": 573,
     "1": 804,
-    "2": 1818,
-    "3": 3207,
-    "4": 1603
+    "2": 1830,
+    "3": 3198,
+    "4": 1598
   },
   "grid_shape": [
     90,
@@ -19,7 +19,7 @@
   "phase_name": "visualization",
   "selected_camera_count": 15,
   "solved_k": 15,
-  "solver_name": "PULP_CBC_CMD",
+  "solver_name": "HiGHS",
   "solver_status": "Optimal",
-  "total_dori_score": 20473.0
+  "total_dori_score": 20450.0
 }
