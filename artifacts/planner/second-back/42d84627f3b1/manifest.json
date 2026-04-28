@@ -1,0 +1,101 @@
+{
+  "artifact_dir": "artifacts\\planner\\second-back\\42d84627f3b1",
+  "batch_request": {
+    "artifact_cache_root": "artifacts/planner",
+    "floorplan_name": "second-back",
+    "k_values": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "shared_config": {
+      "camera_horizontal_fov_deg": 90.0,
+      "camera_horizontal_resolution_px": 1920,
+      "candidate_spacing_cells": 10,
+      "dori_thresholds": {
+        "detection": 25,
+        "identification": 250,
+        "observation": 63,
+        "recognition": 125
+      },
+      "orientation_angles_deg": [
+        0,
+        45,
+        90,
+        135,
+        180,
+        225,
+        270,
+        315
+      ],
+      "orientation_step_deg": 45
+    }
+  },
+  "floorplan": {
+    "grid_cell_size_m": 0.34653822,
+    "name": "second-back",
+    "null_cell_count": 9395,
+    "open_cell_count": 8208,
+    "shape": [
+      90,
+      210
+    ],
+    "solid_cell_count": 1297,
+    "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\second-back.png"
+  },
+  "schema_version": 1,
+  "shared_config": {
+    "camera_horizontal_fov_deg": 90.0,
+    "camera_horizontal_resolution_px": 1920,
+    "candidate_spacing_cells": 10,
+    "dori_thresholds": {
+      "detection": 25,
+      "identification": 250,
+      "observation": 63,
+      "recognition": 125
+    },
+    "orientation_angles_deg": [
+      0,
+      45,
+      90,
+      135,
+      180,
+      225,
+      270,
+      315
+    ],
+    "orientation_step_deg": 45
+  },
+  "shared_fingerprint": "42d84627f3b1",
+  "solution_fingerprints": {
+    "10": "199bde015e42",
+    "11": "fcc9eefe1319",
+    "12": "1dc50b94102a",
+    "13": "63ff93a3be84",
+    "14": "fd6d73a64ed3",
+    "15": "4a9c9a7542c5",
+    "16": "dd824a285ec2",
+    "17": "e3affe5e4c22",
+    "18": "e0e54b629bae",
+    "19": "a385a8490b6c",
+    "20": "bdaa420e4414",
+    "21": "e76234832356",
+    "22": "fbc8ae9024e5",
+    "23": "e7fd47652646",
+    "24": "cbdc175d2a5b",
+    "25": "299e7a99deed"
+  }
+}

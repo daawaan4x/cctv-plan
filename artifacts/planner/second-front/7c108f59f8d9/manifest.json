@@ -1,0 +1,101 @@
+{
+  "artifact_dir": "artifacts\\planner\\second-front\\7c108f59f8d9",
+  "batch_request": {
+    "artifact_cache_root": "artifacts/planner",
+    "floorplan_name": "second-front",
+    "k_values": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "shared_config": {
+      "camera_horizontal_fov_deg": 90.0,
+      "camera_horizontal_resolution_px": 1920,
+      "candidate_spacing_cells": 10,
+      "dori_thresholds": {
+        "detection": 25,
+        "identification": 250,
+        "observation": 63,
+        "recognition": 125
+      },
+      "orientation_angles_deg": [
+        0,
+        45,
+        90,
+        135,
+        180,
+        225,
+        270,
+        315
+      ],
+      "orientation_step_deg": 45
+    }
+  },
+  "floorplan": {
+    "grid_cell_size_m": 0.34653822,
+    "name": "second-front",
+    "null_cell_count": 9379,
+    "open_cell_count": 8277,
+    "shape": [
+      90,
+      210
+    ],
+    "solid_cell_count": 1244,
+    "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\second-front.png"
+  },
+  "schema_version": 1,
+  "shared_config": {
+    "camera_horizontal_fov_deg": 90.0,
+    "camera_horizontal_resolution_px": 1920,
+    "candidate_spacing_cells": 10,
+    "dori_thresholds": {
+      "detection": 25,
+      "identification": 250,
+      "observation": 63,
+      "recognition": 125
+    },
+    "orientation_angles_deg": [
+      0,
+      45,
+      90,
+      135,
+      180,
+      225,
+      270,
+      315
+    ],
+    "orientation_step_deg": 45
+  },
+  "shared_fingerprint": "7c108f59f8d9",
+  "solution_fingerprints": {
+    "10": "173395f7f62d",
+    "11": "df4cbbbc5b19",
+    "12": "22be506915fe",
+    "13": "8e6b877fbdc5",
+    "14": "df90cc9e93cd",
+    "15": "4704e052d91b",
+    "16": "2d73a3a20d4f",
+    "17": "bc3acf91b6f6",
+    "18": "5a563178c56a",
+    "19": "08a1f8cf8e97",
+    "20": "5ff2a641d425",
+    "21": "1e8f17c61940",
+    "22": "3014bf960796",
+    "23": "a70704a15ec5",
+    "24": "ff639ab63475",
+    "25": "7cfd96cd8da7"
+  }
+}

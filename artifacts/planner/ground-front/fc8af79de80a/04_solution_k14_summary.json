@@ -1,0 +1,15 @@
+{
+  "blind_spot_pct": 7.972010496063976,
+  "coverage_detection_plus_pct": 92.02798950393603,
+  "coverage_identification_pct": 18.692990128701737,
+  "coverage_observation_plus_pct": 79.74509558915406,
+  "coverage_recognition_plus_pct": 55.82906410096214,
+  "objective_value": 19711.0,
+  "open_cell_count": 8003,
+  "phase_name": "optimization",
+  "selected_camera_count": 14,
+  "solved_k": 14,
+  "solver_name": "PULP_CBC_CMD",
+  "solver_status": "Optimal",
+  "total_dori_score": 19711.0
+}

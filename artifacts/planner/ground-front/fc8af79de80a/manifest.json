@@ -1,0 +1,101 @@
+{
+  "artifact_dir": "artifacts\\planner\\ground-front\\fc8af79de80a",
+  "batch_request": {
+    "artifact_cache_root": "artifacts/planner",
+    "floorplan_name": "ground-front",
+    "k_values": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "shared_config": {
+      "camera_horizontal_fov_deg": 90.0,
+      "camera_horizontal_resolution_px": 1920,
+      "candidate_spacing_cells": 10,
+      "dori_thresholds": {
+        "detection": 25,
+        "identification": 250,
+        "observation": 63,
+        "recognition": 125
+      },
+      "orientation_angles_deg": [
+        0,
+        45,
+        90,
+        135,
+        180,
+        225,
+        270,
+        315
+      ],
+      "orientation_step_deg": 45
+    }
+  },
+  "floorplan": {
+    "grid_cell_size_m": 0.34653822,
+    "name": "ground-front",
+    "null_cell_count": 9626,
+    "open_cell_count": 8003,
+    "shape": [
+      90,
+      210
+    ],
+    "solid_cell_count": 1271,
+    "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\ground-front.png"
+  },
+  "schema_version": 1,
+  "shared_config": {
+    "camera_horizontal_fov_deg": 90.0,
+    "camera_horizontal_resolution_px": 1920,
+    "candidate_spacing_cells": 10,
+    "dori_thresholds": {
+      "detection": 25,
+      "identification": 250,
+      "observation": 63,
+      "recognition": 125
+    },
+    "orientation_angles_deg": [
+      0,
+      45,
+      90,
+      135,
+      180,
+      225,
+      270,
+      315
+    ],
+    "orientation_step_deg": 45
+  },
+  "shared_fingerprint": "fc8af79de80a",
+  "solution_fingerprints": {
+    "10": "e8e87aebd698",
+    "11": "059ced93e3f6",
+    "12": "1f4b3fe91f09",
+    "13": "2fd3fce15bf4",
+    "14": "e0e1aeb74e0c",
+    "15": "83a6017f5f46",
+    "16": "5485e4ab49f0",
+    "17": "c34855007305",
+    "18": "29c8ab8b01cc",
+    "19": "056497043d30",
+    "20": "d47ead887e65",
+    "21": "7fa4fff90ca3",
+    "22": "dff34e4abad6",
+    "23": "c9cd4e35d982",
+    "24": "24fbe9e674da",
+    "25": "676f2fbfb92c"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "artifact_dir": "artifacts\\planner\\ground-back\\bec358e26c32",
+  "batch_request": {
+    "artifact_cache_root": "artifacts/planner",
+    "floorplan_name": "ground-back",
+    "k_values": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "shared_config": {
+      "camera_horizontal_fov_deg": 90.0,
+      "camera_horizontal_resolution_px": 1920,
+      "candidate_spacing_cells": 10,
+      "dori_thresholds": {
+        "detection": 25,
+        "identification": 250,
+        "observation": 63,
+        "recognition": 125
+      },
+      "orientation_angles_deg": [
+        0,
+        45,
+        90,
+        135,
+        180,
+        225,
+        270,
+        315
+      ],
+      "orientation_step_deg": 45
+    }
+  },
+  "floorplan": {
+    "grid_cell_size_m": 0.34653822,
+    "name": "ground-back",
+    "null_cell_count": 9135,
+    "open_cell_count": 8429,
+    "shape": [
+      90,
+      210
+    ],
+    "solid_cell_count": 1336,
+    "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\ground-back.png"
+  },
+  "schema_version": 1,
+  "shared_config": {
+    "camera_horizontal_fov_deg": 90.0,
+    "camera_horizontal_resolution_px": 1920,
+    "candidate_spacing_cells": 10,
+    "dori_thresholds": {
+      "detection": 25,
+      "identification": 250,
+      "observation": 63,
+      "recognition": 125
+    },
+    "orientation_angles_deg": [
+      0,
+      45,
+      90,
+      135,
+      180,
+      225,
+      270,
+      315
+    ],
+    "orientation_step_deg": 45
+  },
+  "shared_fingerprint": "bec358e26c32",
+  "solution_fingerprints": {
+    "10": "9cf3a9e45fc0",
+    "11": "ff95bd67b220",
+    "12": "ae3ce78d3b05",
+    "13": "4495b6116120",
+    "14": "f745165d2903",
+    "15": "c6b9ab481201",
+    "16": "ef9788b262bf",
+    "17": "b538cd7a8d09",
+    "18": "f79f6fbe18e6",
+    "19": "de0004a532ca",
+    "20": "ee48b1d80145",
+    "21": "3146b8ce9658",
+    "22": "a20659c93c84",
+    "23": "c0922474fc1f",
+    "24": "1152f02679b5",
+    "25": "776836c98da1"
+  }
+}
