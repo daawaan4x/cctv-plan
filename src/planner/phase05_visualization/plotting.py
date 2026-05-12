@@ -8,7 +8,7 @@ import numpy as np
 
 from src.common.floorplan import FloorPlanInput
 
-from .core import VisualizationArtifacts
+from .artifacts import VisualizationArtifacts
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -273,3 +273,4 @@ __all__ = [
     "plot_metric_summary_table",
     "plot_selected_configurations",
 ]
+

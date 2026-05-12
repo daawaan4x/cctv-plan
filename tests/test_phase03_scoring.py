@@ -23,7 +23,7 @@ from src.planner.phase03_scoring import (
     save_sparse_score_artifacts,
     validate_sparse_score_artifacts,
 )
-from src.planner.phase03_scoring.core import (
+from src.planner.phase03_scoring.scoring import (
     _build_scoring_constants,
     _score_distances_to_dori,
 )
