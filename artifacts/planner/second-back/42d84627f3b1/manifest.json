@@ -1,5 +1,5 @@
 {
-  "artifact_dir": "artifacts\\planner\\second-back\\42d84627f3b1",
+  "artifact_dir": "artifacts/planner/second-back/42d84627f3b1",
   "batch_request": {
     "artifact_cache_root": "artifacts/planner",
     "floorplan_name": "second-back",
@@ -54,7 +54,7 @@
       210
     ],
     "solid_cell_count": 1281,
-    "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\second-back.png"
+    "source_path": "/home/daawaan4x/repos/daawaan4x/cctv-plan/static/floor-plan/traced/second-back.png"
   },
   "schema_version": 1,
   "shared_config": {

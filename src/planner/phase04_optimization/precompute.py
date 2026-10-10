@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+from numpy.typing import NDArray
 
 from src.common.floorplan import FloorPlanInput
 from src.planner._shared.cache import get_shared_artifact_dir

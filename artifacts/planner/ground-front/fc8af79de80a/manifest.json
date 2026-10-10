@@ -1,5 +1,5 @@
 {
-  "artifact_dir": "artifacts\\planner\\ground-front\\fc8af79de80a",
+  "artifact_dir": "artifacts/planner/ground-front/fc8af79de80a",
   "batch_request": {
     "artifact_cache_root": "artifacts/planner",
     "floorplan_name": "ground-front",
@@ -54,7 +54,7 @@
       210
     ],
     "solid_cell_count": 1271,
-    "source_path": "C:\\Users\\Acer\\.repos\\daawaan4x\\cctv-plan\\static\\floor-plan\\traced\\ground-front.png"
+    "source_path": "/home/daawaan4x/repos/daawaan4x/cctv-plan/static/floor-plan/traced/ground-front.png"
   },
   "schema_version": 1,
   "shared_config": {

@@ -8,7 +8,7 @@ from src.planner._shared.cache import write_json, write_npz
 
 from .artifacts import OptimizationArtifacts, OptimizationPrecomputeArtifacts
 from .constants import PHASE_NAME, _DORI_LEVELS
-from .coverage import _compute_coverage_metrics
+from .metrics import _compute_coverage_metrics
 from .validation import (
     _validate_final_score_arrays,
     _validate_offsets,

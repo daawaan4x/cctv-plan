@@ -5,6 +5,8 @@ from __future__ import annotations
 from io import StringIO
 import json
 import shutil
+import subprocess
+import sys
 import unittest
 import uuid
 from pathlib import Path
@@ -63,10 +65,10 @@ def _build_all_open_square_floorplan() -> FloorPlanInput:
     return _build_floorplan(
         "phase04-open-square",
         [
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
         ],
     )
 
@@ -117,6 +119,25 @@ def _build_sparse_score_artifacts(
 
 class OptimizationTests(unittest.TestCase):
     """Verify exact threshold-coverage solving, persistence, and validation."""
+
+    def test_planner_imports_from_optimization_notebook_directory(self) -> None:
+        """Keep local modules from shadowing Numba's optional coverage dependency."""
+
+        repo_root = Path(__file__).resolve().parents[1]
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-B",
+                "-c",
+                f"import sys; sys.path.append({str(repo_root)!r}); "
+                "from src.planner.main import load_workspace",
+            ],
+            cwd=repo_root / "src/planner/phase04_optimization",
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_solve_optimization_artifacts_enforces_budget_and_orientation_exclusivity(
         self,

@@ -61,10 +61,10 @@ def _build_all_open_square_floorplan() -> FloorPlanInput:
     return _build_floorplan(
         "phase05-open-square",
         [
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
         ],
     )
 

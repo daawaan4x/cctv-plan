@@ -45,10 +45,10 @@ def _build_all_open_square_floorplan() -> FloorPlanInput:
     return _build_floorplan(
         "phase02-open-square",
         [
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
         ],
     )
 
@@ -59,10 +59,10 @@ def _build_diagonal_corner_blocked_floorplan() -> FloorPlanInput:
     return _build_floorplan(
         "phase02-diagonal-blocked",
         [
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, SOLID_CELL, NULL_CELL],
-            [NULL_CELL, SOLID_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, SOLID_CELL, SOLID_CELL],
+            [SOLID_CELL, SOLID_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
         ],
     )
 
@@ -73,10 +73,10 @@ def _build_diagonal_one_side_open_floorplan() -> FloorPlanInput:
     return _build_floorplan(
         "phase02-diagonal-open",
         [
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
-            [NULL_CELL, OPEN_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, SOLID_CELL, OPEN_CELL, NULL_CELL],
-            [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
+            [SOLID_CELL, OPEN_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, SOLID_CELL, OPEN_CELL, SOLID_CELL],
+            [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
         ],
     )
 
@@ -157,14 +157,14 @@ class VisibilityTests(unittest.TestCase):
     def test_generate_visibility_artifacts_blocks_rays_crossing_non_open_cells(self) -> None:
         cases = {
             "null-blocker": [
-                [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
-                [NULL_CELL, OPEN_CELL, NULL_CELL, OPEN_CELL, NULL_CELL],
-                [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
+                [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
+                [SOLID_CELL, OPEN_CELL, NULL_CELL, OPEN_CELL, SOLID_CELL],
+                [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
             ],
             "solid-blocker": [
-                [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
-                [NULL_CELL, OPEN_CELL, SOLID_CELL, OPEN_CELL, NULL_CELL],
-                [NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL, NULL_CELL],
+                [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
+                [SOLID_CELL, OPEN_CELL, SOLID_CELL, OPEN_CELL, SOLID_CELL],
+                [SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL, SOLID_CELL],
             ],
         }
 
